@@ -488,7 +488,7 @@ const STATUS = {
   review:['Under review','t-yellow'], completed:['Completed','t-green'], failed:['Failed','t-gray'], rejected:['Rejected by Admin','t-gray'], expired:['Expired','t-gray'], withdrawn:['Withdrawn','t-gray']
 };
 const tag = s => `<span class="tag ${STATUS[s][1]}">${STATUS[s][0]}</span>`;
-const BSTATUS = {active:['Active','t-green'],cooling:['Waiting period','t-blue'],awaiting:['Awaiting Admin approval','t-yellow'],screening:['Under review','t-yellow'],info:['Additional information needed','t-red'],declined:['Not added','t-gray']};
+const BSTATUS = {active:['Active','t-green'],cooling:['Waiting period','t-blue'],awaiting:['Awaiting Admin approval','t-yellow'],screening:['Being checked','t-yellow'],info:['Additional information needed','t-red'],declined:['Not added','t-gray']};
 const btag = b => `<span class="tag ${BSTATUS[b.status][1]}">${b.status==='cooling'?'Available from '+b.availFrom:BSTATUS[b.status][0]}</span>`;
 
 /* ================= approvals (generic module) ================= */
@@ -743,7 +743,7 @@ function benSubmit(){
   const short=d.vals[0].split(/[ ,]/)[0]+' '+(d.vals[0].split(/[ ,]/)[1]||'');
   const nb={id:'B'+(S.beneficiaries.length+1),name:d.vals[0],nick:short.trim(),cc:d.cc,method:d.method,acct:'•••• '+String(d.vals[acctIdx]||'0000').replace(/\s/g,'').slice(-4),bank:bankIdx>=0?d.vals[bankIdx]:(d.method==='wallet'?'Alipay':'Bank'),vals:{...d.vals},cpv:methodOf({cc:d.cc,method:d.method}).cpv?(S.forceNoMatch?{status:'nomatch',name:'GOLDEN BAY HOLDINGS LTD'}:{status:'match',name:d.vals[0].toUpperCase().replace(/[.,]/g,'')}):{status:'na'},status:'screening',addedBy:S.persona,addedAt:now(),fromPay:d.fromPay&&!!S.draft,needInfo:!!S.forceBenInfo,failScreen:!!S.forceBenFail};
   S.beneficiaries.push(nb); S.forceBenInfo=false; S.forceBenFail=false; S.forceNoMatch=false; S.benDraft=null;
-  otpFlow('Confirm new beneficiary',()=>{ location.hash='#ben/'+nb.id; screenBen(nb); });
+  location.hash='#ben/'+nb.id; screenBen(nb);
 }
 function screenBen(b){
   b.status='screening';
@@ -758,7 +758,7 @@ function screenBen(b){
 function vBen(id){
   const b=ben(id); if(!b) return vBens(); const c=CORRIDORS[b.cc]; const m=methodOf(b);
   const steps=[['Added',`By ${USERS[b.addedBy||'admin'].name}${b.addedAt?' · '+b.addedAt:''}`,'done']];
-  if(b.status==='screening') steps.push(['Checking','We\'re checking this beneficiary. This usually takes a few minutes.','cur']);
+  if(b.status==='screening') steps.push(['Being checked','We\'re checking this beneficiary. This usually takes a few minutes.','cur']);
   else if(b.status==='info') steps.push(['Additional information needed',`Reply within 72 hours, by ${b.infoDue}`,'warn']);
   else if(b.screenFail) steps.push(['Not added','We couldn\'t add this beneficiary.','fail']);
   else steps.push(['Checked','','done']);
