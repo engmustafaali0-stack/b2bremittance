@@ -21,7 +21,11 @@ html,body{margin:0;background:var(--g100);color:var(--g800);font-family:Inter,sy
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--blue-600);text-decoration:none}
 .num{font-family:"Space Grotesk",Inter,sans-serif;font-feature-settings:"tnum"}
-.ribbon{background:var(--blue-900);color:#fff;font-size:12px;text-align:center;padding:6px 16px}
+.ribbon{background:var(--blue-900);color:#fff;font-size:12px;text-align:center;padding:6px 16px;display:flex;justify-content:center;align-items:center;gap:8px 16px;flex-wrap:wrap}
+.rb-sw{display:inline-flex;align-items:center;gap:6px}.rb-sw .lb{opacity:.75}
+.rb-sw button{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35);font:inherit;font-weight:600;padding:3px 10px;cursor:pointer}
+.rb-sw button:first-of-type{border-radius:999px 0 0 999px}.rb-sw button:last-of-type{border-radius:0 999px 999px 0;border-left:0}
+.rb-sw button.on{background:#fff;color:var(--blue-900)}
 .ribbon b{font-weight:600}
 /* top bar */
 .top{position:sticky;top:0;z-index:20;height:64px;background:#fff;border-bottom:1px solid var(--g300);display:flex;align-items:center;gap:16px;padding:0 24px}
@@ -341,7 +345,7 @@ body.hide-dec .decision{display:none}
 </style>
 </head>
 <body>
-<div class="ribbon"><b>Prototype</b> · B2B international payments · all names, rates, fees and delivery times are sample data</div>
+<div class="ribbon"><span><b>Prototype</b> · B2B international payments · all names, rates, fees and delivery times are sample data</span><span class="rb-sw" id="modeSw"></span></div>
 <header class="top">
   <button class="menu-btn" onclick="document.querySelector('.side').classList.toggle('open')" aria-label="Menu">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -551,6 +555,7 @@ function renderNav(route){
     <a href="javascript:soon()">Settings</a>
     <div class="nav-group">Prototype</div>
     ${a('#scenarios','Edge cases and states')}`;
+  $('#modeSw').innerHTML=`<span class="lb">View as</span><button class="${S.mode!=='first'?'on':''}" onclick="setMode('returning')">Returning business</button><button class="${S.mode==='first'?'on':''}" onclick="setMode('first')">First-time business</button>`;
   const u=me(); $('#whoAv').textContent=u.init; $('#whoName').textContent=u.name; $('#whoRole').textContent=u.role;
   const unread = S.notif[S.persona].filter(n=>!n.read).length;
   $('#bellCount').style.display = unread?'grid':'none'; $('#bellCount').textContent=unread;
@@ -586,6 +591,8 @@ function toggleProto(force){
 }
 function setPersona(p){ S.persona=p; closeDrawer(true); if($('#proto').classList.contains('open')) toggleProto(true); render(); toast(`Now viewing as ${USERS[p].name}`); }
 function setBal(v){ S.balance=v; toggleProto(true); render(); }
+function setMode(m){ if((S.mode||'returning')===m) { goIntl(); return; } const per=S.persona; S=seed(); S.persona=per; S.introSeen=true; if(m==='first') emptyBiz(); S.mode=m; closeModal(); closeDrawer(true); $('#proto').classList.remove('open'); if(location.hash==='#intl') render(); else location.hash='#intl'; toast(m==='first'?'Showing a business that has never paid abroad':'Showing a business with payment history'); }
+function emptyBiz(){ S.payments=[]; S.invoices=[]; S.beneficiaries=[]; S.notif={admin:[],maker:[]}; S.mode='first'; }
 function resetAll(){ S=seed(); $('#proto').classList.remove('open'); closeDrawer(true); location.hash='#home'; render(); toast('Demo data reset'); }
 
 /* ================= router ================= */
@@ -864,7 +871,7 @@ function startPay(cc,benId,invId,recvPreset){
   if(S.disabled){ location.hash='#intl'; return; }
   S.introSeen=true; tick();
   const inv = invId? S.invoices.find(i=>i.id===invId):null; const b0 = benId? ben(benId):null;
-  S.draft={cc:b0?b0.cc:(cc||'CN'),ben:benId||null,send:'',recv:'',last:'recv',invId:invId||null,invNo:inv?inv.no:'',invFile:!!inv,invNew:false,showAllInv:false,purpose:'goods',sof:'Company funds',other:[],lockBen:!!invId,fromInv:!!inv,promo:'',disc:0,promoErr:'',amtSum:!!recvPreset};
+  S.draft={cc:b0?b0.cc:(cc||'CN'),ben:benId||null,send:'',recv:'',last:'recv',invId:invId||null,invNo:inv?inv.no:'',invFile:!!inv,invNew:false,showAllInv:false,purpose:'goods',sof:'Company funds',other:[],invTyped:'',lockBen:!!invId,fromInv:!!inv,promo:'',disc:0,promoErr:'',amtSum:!!recvPreset};
   if(recvPreset){ S.draft.recv=String(recvPreset); }
   calcDraft(); location.hash='#pay/1'; render();
 }
@@ -891,13 +898,19 @@ function openNewInv(){ Object.assign(S.draft,{invNew:true,invId:null,invNo:'',in
 function closeNewInv(){ Object.assign(S.draft,{invNew:false,invNo:'',invFile:false,other:[]}); keepScroll=true; render(); }
 const invLine = () => { const d=S.draft; const c=CORRIDORS[d.cc]; const i=d.invId?S.invoices.find(x=>x.id===d.invId):null;
   return `<div class="alert a-info" style="align-items:center"><span class="ic">${ic.file}</span><div style="flex:1"><b>Paying invoice <span class="num">${d.invNo}</span></b><div class="small">Due ${i.due}${i.status==='overdue'?' · <span style="color:var(--red600)">Overdue</span>':''}</div></div><button class="btn btn-sm btn-secondary" onclick="viewDoc('${i.no.replace(/'/g,'')}.pdf')">View invoice</button></div>`; };
-const invOk = () => { const d=S.draft; return d.invId || (d.invNew && d.invFile && d.invNo.trim()); };
+const normNo = v => String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+const invMatch = () => { const d=S.draft; const i=d.invId&&S.invoices.find(x=>x.id===d.invId); return i && normNo(d.invTyped)!=='' && normNo(d.invTyped)===normNo(i.no); };
+const invOk = () => { const d=S.draft; return d.invId ? invMatch() : (d.invNew && d.invFile && d.invNo.trim()); };
+const invChkHtml = () => { const d=S.draft; const i=S.invoices.find(x=>x.id===d.invId); const t=normNo(d.invTyped); const bad=t && !normNo(i.no).startsWith(t);
+  return `<div class="field mt16" style="margin-bottom:0"><label class="f">Invoice number</label><input id="invChk" class="input ${bad?'err':''}" autocomplete="off" value="${d.invTyped||''}" oninput="invChkIn(this.value)" placeholder="Type the number shown on the invoice">
+    <div class="help" id="invChkHelp" style="${bad?'color:var(--red600)':''}">${bad?`This doesn't match invoice ${i.no}. Check the number on the invoice.`:invMatch()?`<span style="color:var(--green600)">Matches invoice ${i.no}.</span>`:'We use it as the reference on your supplier\'s bank statement.'}</div></div>`; };
+function invChkIn(v){ const was=invOk(); S.draft.invTyped=v; if(invOk()!==was){ keepScroll=true; render(); const e=$('#invChk'); if(e){ e.focus({preventScroll:true}); e.setSelectionRange(e.value.length,e.value.length); } } else { const w=$('#invChkWrap'); if(w){ w.innerHTML=invChkHtml(); const e=$('#invChk'); e.focus({preventScroll:true}); e.setSelectionRange(e.value.length,e.value.length); } payCheck(); } }
 const payReady = () => { const d=S.draft; const b=d.ben&&ben(d.ben); return b && b.status==='active' && invOk() && parseFloat(d.recv)>0 && dTot()<=S.balance && (d.sof!=='Other'||d.sofOther); };
 const rateLine = cc => { const c=CORRIDORS[cc]; return `1 AED = <span class="num">${S.rates[cc].toFixed(4)}</span> ${c.cur} · fee ${money(feeFor(c.cur))} + VAT`; };
 const invRow = (i,d) => `<div class="inv-row ${d.invId===i.id?'sel':''}" onclick="pickInv('${i.id}')"><span class="rb"></span><div class="li-main"><div class="t num">${i.no}</div><div class="s">Due ${i.due}${i.status==='overdue'?' · <span style="color:var(--red600);font-weight:600">Overdue</span>':''} · ${i.src}</div></div><button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();viewDoc('${i.no.replace(/'/g,'')}.pdf')">View</button></div>`;
 function invSection(b,invs){
   const d=S.draft;
-  if(d.lockBen) return invLine();
+  if(d.lockBen) return invLine()+`<div id="invChkWrap">${invChkHtml()}</div>`;
   const sorted=invs.slice().sort((x,y)=>(x.status==='overdue'?0:1)-(y.status==='overdue'?0:1));
   const shown=d.showAllInv?sorted:sorted.slice(0,4);
   const form=`<div class="new-inv">
@@ -907,6 +920,7 @@ function invSection(b,invs){
     </div>`;
   return `${invs.length?`<div class="small muted mb8">Open invoices from ${b.nick}. Pick the one you're paying.</div>
     <div class="inv-list">${shown.map(i=>invRow(i,d)).join('')}</div>
+    ${d.invId&&!d.invNew?`<div id="invChkWrap">${invChkHtml()}</div>`:''}
     ${sorted.length>4?`<a href="javascript:void(0)" class="small" onclick="S.draft.showAllInv=!S.draft.showAllInv;keepScroll=true;render()">${d.showAllInv?'Show fewer':'Show all '+sorted.length+' invoices'}</a>`:''}`
     :`<div class="small muted mb8">No open invoices from ${b.nick} yet. Add the invoice you're paying.</div>`}
     ${d.invNew?form:`<button class="btn btn-secondary btn-block mt8" style="border-style:dashed" onclick="openNewInv()">+ Add new invoice</button>`}`;
@@ -979,7 +993,7 @@ function payCheck(){ const n=$('#nPay'); if(n) n.disabled=!payReady(); }
 function pickCountry(k){ const d=S.draft; if(d.cc!==k){ Object.assign(d,{ben:null,invId:null,invNo:'',invNew:false,invFile:false,other:[]}); d.cc=k; if(d.last==='recv'){ d.last='send'; } calcDraft(); } keepScroll=true; render(); }
 function refreshAmt(){ const t=$('#totTxt'); if(t) t.textContent=money(dTot()); const bb=$('#balBox'); if(bb) bb.innerHTML=balLine(); payCheck(); }
 function amtIn(which,v){ const d=S.draft; v=v.replace(/[^0-9.]/g,''); d[which]=v; d.last=which; calcDraft(); const o=which==='send'?$('#recvIn'):$('#sendIn'); if(o) o.value=which==='send'?d.recv:d.send; refreshAmt(); }
-function pickInv(id){ const i=S.invoices.find(x=>x.id===id); Object.assign(S.draft,{invId:id,invNo:i.no,invNew:false,invFile:true,other:[]}); keepScroll=true; render(); }
+function pickInv(id){ const i=S.invoices.find(x=>x.id===id); Object.assign(S.draft,{invId:id,invNo:i.no,invTyped:'',invNew:false,invFile:true,other:[]}); keepScroll=true; render(); const e=$('#invChk'); if(e) e.focus({preventScroll:true}); }
 function quoteBlock(){
   const d=S.draft; const c=CORRIDORS[d.cc]; const amt=dAmt();
   return `<div class="row between"><h3 style="margin:0">Current rate</h3><span class="small muted">Refreshes in <span class="countdown" id="qcd">${mmss(S.quoteSecs)}</span></span></div>
@@ -1325,7 +1339,7 @@ const SCEN=[
   ['Account name doesn\'t match','The receiving bank returns a different account name. The maker sees it on the beneficiary and the Admin gets a red flag at approval.',()=>{S.persona='maker';S.forceNoMatch=true;location.hash='#beneficiaries';setTimeout(()=>startBen('IN'),50);},'Try it'],
   ['Maker can\'t approve their own request','Sara sees her pending payment as read-only and can withdraw it.',()=>{S.persona='maker';S.apTab='req';location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open'],
   ['Add a new supplier from invoices','Add invoice, then "+ New supplier" goes into adding a beneficiary.',()=>{S.introSeen=true;location.hash='#invoices';setTimeout(addInvoice,50);},'Open'],
-  ['First-time user','A business that has never paid abroad: no payments, invoices or beneficiaries yet.',()=>{S.payments=[];S.invoices=[];S.beneficiaries=[];S.notif={admin:[],maker:[]};S.introSeen=true;location.hash='#intl';},'Open'],
+  ['First-time user','A business that has never paid abroad: no payments, invoices or beneficiaries yet. Also available from the View as switch in the top banner.',()=>{emptyBiz();S.introSeen=true;location.hash='#intl';},'Open'],
   ['Send again','Repeat a completed payment: supplier, currency, amount and purpose are filled in; add the new invoice.',()=>{S.introSeen=true;location.hash='#intl';},'Open'],
   ['Feature turned off by Ops','Locked state; payments in progress still complete.',()=>{S.disabled=true;location.hash='#intl';},'Try it'],
   ['Payment advice (PDF)','Downloads a PDF for a completed payment.',()=>{location.hash='#txn/IP-10231';},'Open'],
