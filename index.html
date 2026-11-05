@@ -198,6 +198,13 @@ body.hide-dec .decision{display:none}
 .stat .k{font-size:12px;color:var(--g500)}
 .stat .v{font-size:22px;font-weight:600;margin-top:2px}
 /* modal */
+.inv-list{display:grid;gap:8px;margin-bottom:8px}
+.inv-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--g300);border-radius:12px;cursor:pointer;background:#fff}
+.inv-row:hover{border-color:var(--blue-600)}
+.inv-row.sel{border-color:var(--blue-600);background:var(--blue-50);box-shadow:0 0 0 1px var(--blue-600) inset}
+.inv-row .rb{width:18px;height:18px;border-radius:50%;border:2px solid var(--g400,#9aa0a6);flex:none}
+.inv-row.sel .rb{border:5px solid var(--blue-600)}
+.new-inv{border:1px solid var(--blue-600);border-radius:12px;padding:14px;margin-top:8px;background:var(--blue-25,#F7F9FF)}
 .overlay{position:fixed;inset:0;background:rgba(0,10,82,.35);display:none;align-items:center;justify-content:center;z-index:50;padding:16px}
 .overlay.open{display:flex}
 .modal{background:#fff;border-radius:var(--r-lg);width:100%;max-width:480px;max-height:90vh;overflow:auto;box-shadow:var(--shadow-lg)}
@@ -372,11 +379,11 @@ const FIELDS = {
   US_bank:[['Registered company name','Pacific Components Inc.'],['Account number','4410 2290 3008'],['ABA routing number','026009593'],['SWIFT code','BOFAUS3N'],['Company address','500 Market St, San Francisco']]
 };
 const PURPOSES = {
-  goods:{name:'Goods purchase',subs:['Payment for goods','Advance payment for goods'],docs:[['Bill of lading or airway bill',false],['Purchase order or contract',false]]},
-  services:{name:'Services',subs:['Service fees','Advance payment for services'],docs:[['Service agreement',true]]},
-  logistics:{name:'Freight and logistics',subs:['Freight charges','Customs and clearing charges'],docs:[['Bill of lading or airway bill',true]]},
-  professional:{name:'Professional fees',subs:['Consulting fees','Legal and accounting fees'],docs:[['Engagement letter or contract',true]]},
-  other:{name:'Other',subs:['Other business payment'],docs:[['Supporting document',true]]}
+  goods:{name:'Goods purchase',docs:[['Bill of lading or airway bill',false],['Purchase order or contract',false]]},
+  services:{name:'Services',docs:[['Service agreement',true]]},
+  logistics:{name:'Freight and logistics',docs:[['Bill of lading or airway bill',true]]},
+  professional:{name:'Professional fees',docs:[['Engagement letter or contract',true]]},
+  other:{name:'Other',docs:[['Supporting document',true]]}
 };
 const USERS = {admin:{name:'Omar Haddad',first:'Omar',role:'Admin',init:'OH'},maker:{name:'Sara Khan',first:'Sara',role:'Finance · maker',init:'SK'},paul:{name:'Paul Mathew',first:'Paul',role:'Operations',init:'PM'}};
 const feeFor = cur => cur==='USD' ? 25 : 15;
@@ -408,21 +415,21 @@ function seed(){
       {id:'B6',name:'Pacific Components Inc.',nick:'Pacific Components',cc:'US',method:'bank',acct:'•••• 3008',bank:'Bank of America',status:'active',addedBy:'maker',addedAt:plusH(-2),known:true,screened:true,fields:'US_bank',cpv:{status:'na'}}
     ],
     invoices:[
-      {id:'I1',ben:'B1',no:'HT-2026-1187',cur:'CNY',amt:50440,due:'2 Nov 2026',status:'unpaid',src:'Uploaded by supplier',docs:['bill-of-lading-OCT.pdf']},
-      {id:'I2',ben:'B2',no:'MT/26-27/0419',cur:'INR',amt:163500,paid:63500,due:'25 Oct 2026',status:'overdue',src:'Added by Sara Khan',docs:['purchase-order-PO-7781.pdf']},
-      {id:'I3',ben:'B3',no:'KP-88213',cur:'HKD',amt:25420,due:'29 Oct 2026',status:'unpaid',src:'Uploaded by supplier'},
-      {id:'I4',ben:'B5',no:'RW-2026-3391',cur:'EUR',amt:5150,due:'14 Nov 2026',status:'unpaid',src:'Added by Omar Haddad'},
-      {id:'I5',ben:'B1',no:'HT-2026-1102',cur:'CNY',amt:35910,due:'10 Oct 2026',status:'paid',src:'Uploaded by supplier'}
+      {id:'I1',ben:'B1',no:'HT-2026-1187',cur:'CNY',due:'2 Nov 2026',status:'unpaid',src:'Uploaded by supplier',docs:['bill-of-lading-OCT.pdf']},
+      {id:'I2',ben:'B2',no:'MT/26-27/0419',cur:'INR',due:'25 Oct 2026',status:'overdue',src:'Added by Sara Khan',docs:['purchase-order-PO-7781.pdf']},
+      {id:'I3',ben:'B3',no:'KP-88213',cur:'HKD',due:'29 Oct 2026',status:'unpaid',src:'Uploaded by supplier'},
+      {id:'I4',ben:'B5',no:'RW-2026-3391',cur:'EUR',due:'14 Nov 2026',status:'unpaid',src:'Added by Omar Haddad'},
+      {id:'I5',ben:'B1',no:'HT-2026-1102',cur:'CNY',due:'10 Oct 2026',status:'paid',src:'Uploaded by supplier'}
     ],
     payments:[
-      {id:'IP-10241',ben:'B1',aed:25984.96,recvAmt:50440,rate:1.9412,status:'awaiting',by:'maker',at:'29 Oct, 12:50',expires:'30 Oct, 12:50',purpose:'goods',inv:'HT-2026-1187',invAmt:50440,invCur:'CNY',sof:'Company funds',docs:['HT-2026-1187.pdf','bill-of-lading-OCT.pdf'],ref:'HT-2026-1187'},
-      {id:'IP-10231',ben:'B1',aed:18500,rate:1.9387,status:'completed',by:'admin',at:'14 Oct, 09:12',sentAt:'14 Oct, 09:13',done:'14 Oct, 16:40',purpose:'goods',inv:'HT-2026-1102',invAmt:35910,invCur:'CNY',sof:'Company funds',payRef:'B2B-77Q4-1031',docs:['HT-2026-1102.pdf']},
-      {id:'IP-10235',ben:'B2',aed:7200,rate:22.701,status:'sent',by:'maker',approvedBy:'admin',approvedAt:'28 Oct, 15:20',at:'28 Oct, 15:05',sentAt:'28 Oct, 15:21',purpose:'goods',inv:'MT/26-27/0388',invAmt:163440,invCur:'INR',sof:'Company funds',docs:['MT-0388.pdf']},
-      {id:'IP-10238',ben:'B3',aed:12000,rate:2.1179,status:'pending_info',by:'maker',approvedBy:'admin',approvedAt:plusH(-1),at:plusH(-1.5),infoAt:plusH(-0.5),infoDue:plusH(4.5),purpose:'logistics',inv:'KP-88102',invAmt:25414,invCur:'HKD',sof:'Company funds',docs:['KP-88102.pdf']},
-      {id:'IP-10237',ben:'B4',aed:15600,rate:9.376,status:'review',by:'admin',at:'27 Oct, 18:10',sentAt:'27 Oct, 18:11',infoSent:'28 Oct, 09:30',purpose:'goods',inv:'AC-5560',invAmt:146265,invCur:'TRY',sof:'Trade finance proceeds',docs:['AC-5560.pdf']},
-      {id:'IP-10239',ben:'B4',aed:9800,rate:9.371,status:'failed',fail:'notcompleted',by:'admin',at:'24 Oct, 10:03',sentAt:'24 Oct, 10:04',failAt:'25 Oct, 09:30',purpose:'goods',inv:'AC-5521',invAmt:91835,invCur:'TRY',sof:'Company funds',docs:['AC-5521.pdf']},
-      {id:'IP-10233',ben:'B5',aed:22000,rate:0.2338,status:'failed',fail:'returned',by:'admin',at:'16 Oct, 13:40',sentAt:'16 Oct, 13:41',done:'17 Oct, 10:15',failAt:'21 Oct, 14:02',purpose:'goods',inv:'RW-2026-3204',invAmt:5143,invCur:'EUR',sof:'Company funds',returnReason:'The beneficiary account is closed',docs:['RW-3204.pdf']},
-      {id:'IP-10236',ben:'B3',aed:4300,rate:2.1182,status:'expired',by:'maker',at:'25 Oct, 17:22',failAt:'26 Oct, 17:22',purpose:'goods',inv:'KP-88160',invAmt:9108,invCur:'HKD',sof:'Company funds',docs:['KP-88160.pdf']}
+      {id:'IP-10241',ben:'B1',aed:25984.96,recvAmt:50440,rate:1.9412,status:'awaiting',by:'maker',at:'29 Oct, 12:50',expires:'30 Oct, 12:50',purpose:'goods',inv:'HT-2026-1187',invCur:'CNY',sof:'Company funds',docs:['HT-2026-1187.pdf','bill-of-lading-OCT.pdf'],ref:'HT-2026-1187'},
+      {id:'IP-10231',ben:'B1',aed:18500,rate:1.9387,status:'completed',by:'admin',at:'14 Oct, 09:12',sentAt:'14 Oct, 09:13',done:'14 Oct, 16:40',purpose:'goods',inv:'HT-2026-1102',invCur:'CNY',sof:'Company funds',payRef:'B2B-77Q4-1031',docs:['HT-2026-1102.pdf']},
+      {id:'IP-10235',ben:'B2',aed:7200,rate:22.701,status:'sent',by:'maker',approvedBy:'admin',approvedAt:'28 Oct, 15:20',at:'28 Oct, 15:05',sentAt:'28 Oct, 15:21',purpose:'goods',inv:'MT/26-27/0388',invCur:'INR',sof:'Company funds',docs:['MT-0388.pdf']},
+      {id:'IP-10238',ben:'B3',aed:12000,rate:2.1179,status:'pending_info',by:'maker',approvedBy:'admin',approvedAt:plusH(-1),at:plusH(-1.5),infoAt:plusH(-0.5),infoDue:plusH(4.5),purpose:'logistics',inv:'KP-88102',invCur:'HKD',sof:'Company funds',docs:['KP-88102.pdf']},
+      {id:'IP-10237',ben:'B4',aed:15600,rate:9.376,status:'review',by:'admin',at:'27 Oct, 18:10',sentAt:'27 Oct, 18:11',infoSent:'28 Oct, 09:30',purpose:'goods',inv:'AC-5560',invCur:'TRY',sof:'Trade finance proceeds',docs:['AC-5560.pdf']},
+      {id:'IP-10239',ben:'B4',aed:9800,rate:9.371,status:'failed',fail:'notcompleted',by:'admin',at:'24 Oct, 10:03',sentAt:'24 Oct, 10:04',failAt:'25 Oct, 09:30',purpose:'goods',inv:'AC-5521',invCur:'TRY',sof:'Company funds',docs:['AC-5521.pdf']},
+      {id:'IP-10233',ben:'B5',aed:22000,rate:0.2338,status:'failed',fail:'returned',by:'admin',at:'16 Oct, 13:40',sentAt:'16 Oct, 13:41',done:'17 Oct, 10:15',failAt:'21 Oct, 14:02',purpose:'goods',inv:'RW-2026-3204',invCur:'EUR',sof:'Company funds',returnReason:'The beneficiary account is closed',docs:['RW-3204.pdf']},
+      {id:'IP-10236',ben:'B3',aed:4300,rate:2.1182,status:'expired',by:'maker',at:'25 Oct, 17:22',failAt:'26 Oct, 17:22',purpose:'goods',inv:'KP-88160',invCur:'HKD',sof:'Company funds',docs:['KP-88160.pdf']}
     ],
     otherApprovals:[
       {id:'TR-58213',type:'Transfer',summary:'AED 6,000.00 to Emirates NBD •••• 1182',by:'maker',at:'28 Oct, 17:25',status:'approved',checker:'admin',checkAt:'28 Oct, 17:30',remark:'Supplier deposit, local'},
@@ -455,7 +462,6 @@ const me = () => USERS[S.persona];
 const isAdmin = () => S.persona==='admin';
 const money = (n,cur='AED',d=2) => `${cur} ${Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})}`;
 const nm = (n,cur='AED',d=2) => `<span class="num">${money(n,cur,d)}</span>`;
-const left = i => +(i.amt-(i.paid||0)).toFixed(2);
 const total = p => { const cur=CORRIDORS[ben(p.ben).cc].cur; return p.aed + feeDue(cur,p.disc||0); };
 const recv = p => p.recvAmt ? p.recvAmt : p.aed * p.rate;
 const aedAt = (p,r) => p.recvAmt ? +(p.recvAmt/r).toFixed(2) : p.aed;
@@ -675,7 +681,7 @@ function vIntl(){
   </div>
   <div class="grid g-main mb24">
     <div class="card" style="align-self:start"><div class="row between mb8"><h3 style="margin:0">Invoices to pay</h3><a href="#invoices" class="small">View all invoices</a></div>
-      ${due.length?due.slice(0,4).map(i=>{const b=ben(i.ben);const c=CORRIDORS[b.cc];return `<div class="list-item"><span class="flag">${c.flag}</span><div class="li-main"><div class="t">${b.nick} · <span class="num">${i.no}</span></div><div class="s">Due ${i.due}${i.status==='overdue'?' · <span style="color:var(--red600);font-weight:600">Overdue</span>':''}</div></div><div class="num" style="font-weight:600;margin-right:12px;text-align:right">${money(left(i),i.cur,0)}${i.paid?'<div class="small muted" style="font-weight:400">left to pay</div>':''}</div><button class="btn btn-sm btn-primary" onclick="payInvoice('${i.id}')">Pay</button></div>`}).join(''):'<p class="muted">No open invoices.</p>'}
+      ${due.length?due.slice(0,4).map(i=>{const b=ben(i.ben);const c=CORRIDORS[b.cc];return `<div class="list-item"><span class="flag">${c.flag}</span><div class="li-main"><div class="t">${b.nick} · <span class="num">${i.no}</span></div><div class="s">Due ${i.due}${i.status==='overdue'?' · <span style="color:var(--red600);font-weight:600">Overdue</span>':''}</div></div><span class="tag t-gray" style="margin-right:12px">${c.cur}</span><button class="btn btn-sm btn-primary" onclick="payInvoice('${i.id}')">Pay</button></div>`}).join(''):'<p class="muted">No open invoices.</p>'}
     </div>
     <div class="card" style="align-self:start">${calcCard()}</div>
   </div>
@@ -714,25 +720,25 @@ function vIntro(){
     </div></div>
   <div class="how">
     <div class="card"><div class="n">1</div><h3>Pick your supplier</h3><div class="muted">Choose a saved supplier or add a new one. You see today's rate and fee straight away.</div></div>
-    <div class="card"><div class="n">2</div><h3>Add the invoice</h3><div class="muted">Pick an open invoice or upload one. Your supplier receives the invoice amount, or part of it if you choose.</div></div>
+    <div class="card"><div class="n">2</div><h3>Add the invoice</h3><div class="muted">Pick one of the supplier's open invoices or add a new one. You enter the amount the supplier receives.</div></div>
     <div class="card"><div class="n">3</div><h3>Approve and track</h3><div class="muted">Your Admin approves with password and OTP. Download the payment advice when it's completed.</div></div>
   </div>`;
 }
 function vInvoices(){
   const rows=S.invoices.slice().sort((x,y)=>({overdue:0,unpaid:1,paid:2}[x.status]-{overdue:0,unpaid:1,paid:2}[y.status]));
-  const st={overdue:['Overdue','t-red'],unpaid:['Unpaid','t-yellow'],part:['Part paid','t-blue'],paid:['Paid','t-green']};
+  const st={overdue:['Overdue','t-red'],unpaid:['Unpaid','t-yellow'],paid:['Paid','t-green']};
   return `<div class="row between mb24" style="flex-wrap:wrap"><div><h1>International payments</h1><p class="sub-title" style="margin:0">Invoices from your overseas suppliers.</p></div>
   <div class="row"><button class="btn btn-secondary" onclick="inviteSupplier()">Request invoice from supplier</button><button class="btn btn-primary" onclick="addInvoice()">Add invoice</button></div></div>
   ${intlTabs('i')}
   <div class="grid g4 mb24">
-    <div class="card stat"><div class="k">Overdue</div><div class="v num" style="color:var(--red600)">${nm(163500,'INR',0)}</div><div class="small muted">1 invoice</div></div>
-    <div class="card stat"><div class="k">Due today</div><div class="v num">${nm(25420,'HKD',0)}</div><div class="small muted">1 invoice</div></div>
-    <div class="card stat"><div class="k">Due in 7 days</div><div class="v num">${nm(50440,'CNY',0)}</div><div class="small muted">1 invoice</div></div>
-    <div class="card stat"><div class="k">Due later</div><div class="v num">${nm(5150,'EUR',0)}</div><div class="small muted">1 invoice</div></div>
+    <div class="card stat"><div class="k">Overdue</div><div class="v num" style="color:var(--red600)">${S.invoices.filter(i=>i.status==='overdue').length}</div><div class="small muted">Past due date</div></div>
+    <div class="card stat"><div class="k">Unpaid</div><div class="v num">${S.invoices.filter(i=>i.status==='unpaid').length}</div><div class="small muted">Not paid yet</div></div>
+    <div class="card stat"><div class="k">Paid</div><div class="v num">${S.invoices.filter(i=>i.status==='paid').length}</div><div class="small muted">Paid through botim</div></div>
+    <div class="card stat"><div class="k">Suppliers</div><div class="v num">${new Set(S.invoices.map(i=>i.ben)).size}</div><div class="small muted">With invoices</div></div>
   </div>
   <div class="card" style="padding:8px 8px 0"><div class="table-wrap"><table>
-  <thead><tr><th>Supplier</th><th>Invoice number</th><th>Amount</th><th>Due date</th><th>Source</th><th>Status</th><th></th></tr></thead>
-  <tbody>${rows.map(i=>{const b=ben(i.ben);return `<tr><td><div class="row" style="gap:8px"><span class="flag">${CORRIDORS[b.cc].flag}</span><b>${b.nick}</b></div></td><td class="num">${i.no}</td><td>${nm(i.amt,i.cur,0)}${i.paid?`<div class="small muted">${money(left(i),i.cur,0)} left</div>`:''}</td><td>${i.due}</td><td class="small muted">${i.src}</td><td><span class="tag ${st[i.status][1]}">${st[i.status][0]}</span></td><td>${i.status!=='paid'?`<button class="btn btn-sm btn-primary" onclick="payInvoice('${i.id}')">Pay</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>`;
+  <thead><tr><th>Supplier</th><th>Invoice number</th><th>Currency</th><th>Due date</th><th>Source</th><th>Status</th><th></th></tr></thead>
+  <tbody>${rows.map(i=>{const b=ben(i.ben);return `<tr><td><div class="row" style="gap:8px"><span class="flag">${CORRIDORS[b.cc].flag}</span><b>${b.nick}</b></div></td><td class="num">${i.no}</td><td>${i.cur}</td><td>${i.due}</td><td class="small muted">${i.src}</td><td><span class="tag ${st[i.status][1]}">${st[i.status][0]}</span></td><td>${i.status!=='paid'?`<button class="btn btn-sm btn-primary" onclick="payInvoice('${i.id}')">Pay</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>`;
 }
 function vBens(){
   return `<div class="row between mb24" style="flex-wrap:wrap"><div><h1>International payments</h1><p class="sub-title" style="margin:0">Businesses you pay abroad.</p></div><button class="btn btn-primary" onclick="startBen()">Add beneficiary</button></div>
@@ -751,7 +757,7 @@ function startBen(cc,fromPay){
   closeModal(); location.hash='#ben-new'; render();
 }
 function vBenNew(){
-  const d=S.benDraft; if(!d){ setTimeout(()=>startBen(),0); return vBens(); }
+  const d=S.benDraft; if(!d){ setTimeout(()=>{ if(location.hash==='#ben-new'&&!S.benDraft) location.replace('#beneficiaries'); },0); return ''; }
   const c=d.cc?CORRIDORS[d.cc]:null; const f=d.cc&&d.method?FIELDS[d.cc+'_'+d.method]:null;
   const back = d.fromPay&&S.draft ? '#pay/1' : '#beneficiaries';
   return `<div class="crumbs"><a href="${back}">${d.fromPay?'New payment':'Beneficiaries'}</a> / Add beneficiary</div><h1>Add a beneficiary</h1><p class="sub-title">An overseas business you want to pay.</p>
@@ -774,7 +780,7 @@ function benSubmit(){
   const short=d.vals[0].split(/[ ,]/)[0]+' '+(d.vals[0].split(/[ ,]/)[1]||'');
   const nb={id:'B'+(S.beneficiaries.length+1),name:d.vals[0],nick:short.trim(),cc:d.cc,method:d.method,acct:'•••• '+String(d.vals[acctIdx]||'0000').replace(/\s/g,'').slice(-4),bank:bankIdx>=0?d.vals[bankIdx]:(d.method==='wallet'?'Alipay':'Bank'),vals:{...d.vals},cpv:methodOf({cc:d.cc,method:d.method}).cpv?(S.forceNoMatch?{status:'nomatch',name:'GOLDEN BAY HOLDINGS LTD'}:{status:'match',name:d.vals[0].toUpperCase().replace(/[.,]/g,'')}):{status:'na'},status:'screening',addedBy:S.persona,addedAt:now(),fromPay:d.fromPay&&!!S.draft,needInfo:!!S.forceBenInfo,failScreen:!!S.forceBenFail};
   S.beneficiaries.push(nb); S.forceBenInfo=false; S.forceBenFail=false; S.forceNoMatch=false; S.benDraft=null;
-  location.hash='#ben/'+nb.id; screenBen(nb);
+  location.replace('#ben/'+nb.id); screenBen(nb);
 }
 function screenBen(b){
   b.status='screening';
@@ -782,7 +788,7 @@ function screenBen(b){
     if(b.failScreen){ b.status='declined'; b.screenFail=true; notify(b.addedBy,'Beneficiary not added',`We couldn't add ${b.nick}.`,'#ben/'+b.id); }
     else if(b.needInfo){ b.status='info'; b.infoDue=plusH(72); b.infoReq='Please upload a recent bank letter or statement showing the beneficiary\'s account name and number.'; notify(b.addedBy,'Additional information needed for a beneficiary',`We need a document for ${b.nick} before it can be added.`,'#ben/'+b.id); }
     else { b.screened=true; b.status='active'; notify(b.addedBy,'Beneficiary added',`${b.nick} is ready to pay.`,'#ben/'+b.id);
-      if(b.fromPay&&S.draft&&location.hash==='#ben/'+b.id){ S.draft.cc=b.cc; S.draft.ben=b.id; calcDraft(); location.hash='#pay/1'; toast(`${b.nick} added and selected`); return; } }
+      if(b.fromPay&&S.draft&&location.hash==='#ben/'+b.id){ Object.assign(S.draft,{cc:b.cc,ben:b.id,invId:null,invNo:'',invFile:false,invNew:true,other:[]}); calcDraft(); location.replace('#pay/1'); toast(`${b.nick} added and selected`); return; } }
     if(location.hash==='#ben/'+b.id) { keepScroll=true; render(); }
   },2500);
 }
@@ -813,9 +819,8 @@ function startPay(cc,benId,invId,recvPreset){
   if(S.disabled){ location.hash='#intl'; return; }
   S.introSeen=true; tick();
   const inv = invId? S.invoices.find(i=>i.id===invId):null; const b0 = benId? ben(benId):null;
-  S.draft={cc:b0?b0.cc:(cc||'CN'),ben:benId||null,send:'',recv:'',last:'recv',invId:invId||null,invNo:inv?inv.no:'',invAmt:inv?String(left(inv)):'',invFile:!!inv,purpose:'goods',sub:0,sof:'Company funds',other:[],lockBen:!!invId,fromInv:!!inv,promo:'',disc:0,promoErr:''};
-  if(inv){ S.draft.recv=String(left(inv)); }
-  else if(recvPreset){ S.draft.recv=String(recvPreset); }
+  S.draft={cc:b0?b0.cc:(cc||'CN'),ben:benId||null,send:'',recv:'',last:'recv',invId:invId||null,invNo:inv?inv.no:'',invFile:!!inv,invNew:false,showAllInv:false,purpose:'goods',sof:'Company funds',other:[],lockBen:!!invId,fromInv:!!inv,promo:'',disc:0,promoErr:''};
+  if(recvPreset){ S.draft.recv=String(recvPreset); }
   calcDraft(); location.hash='#pay/1'; render();
 }
 function payInvoice(id){ const i=S.invoices.find(x=>x.id===id); startPay(ben(i.ben).cc,i.ben,id); }
@@ -835,16 +840,34 @@ function shortfallOptions(need){
     </div></div>`;
 }
 const balLine = () => { const t=dTot(); return t>S.balance ? shortfallOptions(Math.ceil((t-S.balance)*100)/100) : (t?`<div class="small mt8" style="color:var(--green600);display:flex;gap:6px;align-items:center">${ic.ok} Covered by your balance of ${money(S.balance)}</div>`:''); };
-const invMode = () => { const d=S.draft; if(d.invMode) return d.invMode; const b=d.ben&&ben(d.ben); return b&&S.invoices.some(i=>i.ben===b.id&&i.status!=='paid')?'existing':'new'; };
+
 function invNoIn(v){ const was=invOk(); S.draft.invNo=v; if(invOk()!==was){ keepScroll=true; render(); const e=$('#invNoIn'); if(e){ e.focus(); e.setSelectionRange(e.value.length,e.value.length); } } else payCheck(); }
-function setInvMode(m){ Object.assign(S.draft,{invMode:m,invId:null,invNo:'',invAmt:'',invFile:false,other:[]}); keepScroll=true; render(); }
+function openNewInv(){ Object.assign(S.draft,{invNew:true,invId:null,invNo:'',invFile:false,other:[]}); keepScroll=true; render(); }
+function closeNewInv(){ Object.assign(S.draft,{invNew:false,invNo:'',invFile:false,other:[]}); keepScroll=true; render(); }
 const invLine = () => { const d=S.draft; const c=CORRIDORS[d.cc]; const i=d.invId?S.invoices.find(x=>x.id===d.invId):null;
-  return `<div class="alert a-info mt16" style="align-items:center"><span class="ic">${ic.file}</span><div style="flex:1"><b>Paying invoice <span class="num">${d.invNo}</span></b><div class="small">${money(i.amt,i.cur,0)} · due ${i.due}${i.paid?` · ${money(left(i),i.cur,0)} left to pay`:''}${i.status==='overdue'?' · <span style="color:var(--red600)">Overdue</span>':''}</div></div><button class="btn btn-sm btn-secondary" onclick="viewDoc('${i.no.replace(/'/g,'')}.pdf')">View invoice</button></div>`; };
-const invOk = () => { const d=S.draft; return d.invId || (d.invFile && d.invNo); };
+  return `<div class="alert a-info" style="align-items:center"><span class="ic">${ic.file}</span><div style="flex:1"><b>Paying invoice <span class="num">${d.invNo}</span></b><div class="small">Due ${i.due}${i.status==='overdue'?' · <span style="color:var(--red600)">Overdue</span>':''}</div></div><button class="btn btn-sm btn-secondary" onclick="viewDoc('${i.no.replace(/'/g,'')}.pdf')">View invoice</button></div>`; };
+const invOk = () => { const d=S.draft; return d.invId || (d.invNew && d.invFile && d.invNo.trim()); };
 const payReady = () => { const d=S.draft; const b=d.ben&&ben(d.ben); return b && b.status==='active' && invOk() && parseFloat(d.recv)>0 && dTot()<=S.balance && (d.sof!=='Other'||d.sofOther); };
 const rateLine = cc => { const c=CORRIDORS[cc]; return `1 AED = <span class="num">${S.rates[cc].toFixed(4)}</span> ${c.cur} · fee ${money(feeFor(c.cur))} + VAT`; };
+const invRow = (i,d) => `<div class="inv-row ${d.invId===i.id?'sel':''}" onclick="pickInv('${i.id}')"><span class="rb"></span><div class="li-main"><div class="t num">${i.no}</div><div class="s">Due ${i.due}${i.status==='overdue'?' · <span style="color:var(--red600);font-weight:600">Overdue</span>':''} · ${i.src}</div></div><button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();viewDoc('${i.no.replace(/'/g,'')}.pdf')">View</button></div>`;
+function invSection(b,invs){
+  const d=S.draft;
+  if(d.lockBen) return invLine();
+  const sorted=invs.slice().sort((x,y)=>(x.status==='overdue'?0:1)-(y.status==='overdue'?0:1));
+  const shown=d.showAllInv?sorted:sorted.slice(0,4);
+  const form=`<div class="new-inv">
+      <div class="row between mb8"><b>New invoice</b>${invs.length?`<a href="javascript:void(0)" class="small" onclick="closeNewInv()">Cancel</a>`:''}</div>
+      <div class="upload ${d.invFile?'done':''}" onclick="S.draft.invFile=true;keepScroll=true;render()">${d.invFile?ic.ok+' <span>supplier-invoice.pdf · 182 KB</span>':ic.up+'<div>Upload the invoice</div><div class="small">PDF, JPG or PNG, up to 5 MB</div>'}</div>
+      <div class="field mt16" style="margin-bottom:0"><label class="f">Invoice number</label><input id="invNoIn" class="input" autocomplete="off" value="${d.invNo}" oninput="invNoIn(this.value)" placeholder="As shown on the invoice"><div class="help">We use it as the reference on your supplier's bank statement. The invoice is saved for ${b.nick}.</div></div>
+    </div>`;
+  return `${invs.length?`<div class="small muted mb8">Open invoices from ${b.nick}. Pick the one you're paying.</div>
+    <div class="inv-list">${shown.map(i=>invRow(i,d)).join('')}</div>
+    ${sorted.length>4?`<a href="javascript:void(0)" class="small" onclick="S.draft.showAllInv=!S.draft.showAllInv;keepScroll=true;render()">${d.showAllInv?'Show fewer':'Show all '+sorted.length+' invoices'}</a>`:''}`
+    :`<div class="small muted mb8">No open invoices from ${b.nick} yet. Add the invoice you're paying.</div>`}
+    ${d.invNew?form:`<button class="btn btn-secondary btn-block mt8" style="border-style:dashed" onclick="openNewInv()">+ Add new invoice</button>`}`;
+}
 function vPay(step){
-  const d=S.draft; if(!d){ setTimeout(()=>startPay(),0); return ''; }
+  const d=S.draft; if(!d){ setTimeout(()=>{ if(location.hash.startsWith('#pay/')&&!S.draft) location.replace('#intl'); },0); return ''; }
   step=+step||1;
   const head=`<div class="crumbs"><a href="#intl">International payments</a> / New payment</div><h1>${step===1?'New international payment':'Review payment'}</h1><p class="sub-title">${step===1?'Pay an overseas supplier from your AED balance.':'Check everything before you submit.'}</p>`;
   if(step===2) return head+vReview();
@@ -876,17 +899,12 @@ function vPay(step){
   </div>
   ${b&&b.status==='active'?`<div class="card mt16">
     <h2><span class="stepn">3</span> Invoice</h2>
-    ${d.lockBen?'':`<div class="seg mb16"><button class="${invMode()==='existing'?'on':''}" ${invs.length?'':'disabled'} onclick="setInvMode('existing')">${ic.file} Select from my invoices${invs.length?` <span class="c">${invs.length}</span>`:''}</button><button class="${invMode()==='new'?'on':''}" onclick="setInvMode('new')">${ic.up} Upload new invoice</button></div>`}
-    ${invMode()==='existing'?`${d.lockBen?'':`<select class="input" onchange="this.value?pickInv(this.value):null"><option value="">Choose an invoice from ${b.nick}</option>${invs.slice().sort((x,y)=>(x.status==='overdue'?0:1)-(y.status==='overdue'?0:1)).map(i=>`<option value="${i.id}" ${d.invId===i.id?'selected':''}>${i.no} · ${money(left(i),i.cur,0)}${i.paid?' left':''} · due ${i.due}${i.status==='overdue'?' · overdue':''}</option>`).join('')}</select>`}
-      ${d.invId?invLine():''}`
-    :`<div class="upload ${d.invFile?'done':''}" onclick="S.draft.invFile=true;keepScroll=true;render()">${d.invFile?ic.ok+' <span>supplier-invoice.pdf · 182 KB</span>':ic.up+'<div>Upload the invoice</div><div class="small">PDF, JPG or PNG, up to 5 MB</div>'}</div>
-    <div class="field mt16" style="margin-bottom:0"><label class="f">Invoice number</label><input id="invNoIn" class="input" autocomplete="off" value="${d.invNo}" oninput="invNoIn(this.value)" placeholder="As shown on the invoice"><div class="help">We use it as the reference on your supplier's bank statement.</div></div>`}
-    <div id="mm">${partHtml()}</div>
+    ${invSection(b,invs)}
   </div>`:''}
   ${b&&b.status==='active'&&invOk()?`<div class="card mt16">
     <h2><span class="stepn">4</span> Purpose and documents</h2>
-    <div class="grid g2" style="gap:12px"><div class="field" style="margin:0"><label class="f">Purpose</label><select class="input" onchange="S.draft.purpose=this.value;S.draft.sub=0;keepScroll=true;render()">${Object.entries(PURPOSES).map(([k,p])=>`<option value="${k}" ${d.purpose===k?'selected':''}>${p.name}</option>`).join('')}</select></div>
-    <div class="field" style="margin:0"><label class="f">Sub-purpose</label><select class="input" onchange="S.draft.sub=+this.value">${P.subs.map((x,i)=>`<option value="${i}" ${d.sub===i?'selected':''}>${x}</option>`).join('')}</select></div></div><div class="mt16"></div>
+    <div class="field"><label class="f">Purpose</label><select class="input" onchange="S.draft.purpose=this.value;keepScroll=true;render()">${Object.entries(PURPOSES).map(([k,p])=>`<option value="${k}" ${d.purpose===k?'selected':''}>${p.name}</option>`).join('')}</select></div>
+
     <div class="field"><label class="f">Source of funds</label><select class="input" onchange="S.draft.sof=this.value;keepScroll=true;render()">${['Company funds','Trade finance proceeds','Other'].map(o=>`<option ${d.sof===o?'selected':''}>${o}</option>`).join('')}</select></div>
     ${d.sof==='Other'?`<div class="field"><label class="f">Where do the funds come from?</label><input class="input" autocomplete="off" value="${d.sofOther||''}" oninput="S.draft.sofOther=this.value;payCheck()"></div>`:''}
     ${invDocs().length?`<label class="f">Saved with invoice ${d.invNo}</label>${invDocs().map(f=>`<div class="list-item" style="background:var(--green50)"><div class="li-ic">${ic.ok}</div><div class="li-main"><div class="t">${f}</div><div class="s">Attached when the invoice was added</div></div><a href="javascript:void(0)" class="small" onclick="viewDoc('${f}')">View</a></div>`).join('')}<div class="mt16"></div>`:''}
@@ -901,20 +919,16 @@ function vPay(step){
 }
 const invDocs = () => { const d=S.draft; const i=d.invId&&S.invoices.find(x=>x.id===d.invId); return (i&&i.docs)||[]; };
 function addOtherDoc(){ const d=S.draft; const names=PURPOSES[d.purpose].docs.map(x=>x[0].toLowerCase().replace(/[^a-z]+/g,'-')+'.pdf'); d.other.push(names[d.other.length]||'supporting-document-'+(d.other.length+1)+'.pdf'); keepScroll=true; render(); }
-function newInv(){ Object.assign(S.draft,{invId:null,invNo:'',invAmt:'',invFile:false,other:[]}); keepScroll=true; render(); }
-function pickBen(id){ Object.assign(S.draft,{ben:id,invMode:null,invId:null,invNo:'',invAmt:'',invFile:false,other:[]}); keepScroll=true; render(); }
-const partHtml = () => { const d=S.draft; if(!d.cc||!d.invId) return ''; const ia=parseFloat(d.invAmt)||0; const ra=parseFloat(d.recv)||0; const cur=CORRIDORS[d.cc].cur;
-  if(!ia||!ra||Math.abs(ia-ra)<0.005) return '';
-  const fix=`<a href="javascript:void(0)" onclick="useInvAmt()">Pay ${money(ia,cur)} instead</a>`;
-  return ra<ia?`<div class="alert a-info mt8"><span class="ic">${ic.info}</span><div>You're paying part of this invoice: ${nm(ra,cur)} of ${nm(ia,cur)}. The rest stays open on the invoice. ${fix}</div></div>`
-   :`<div class="alert a-warn mt8"><span class="ic">${ic.warn}</span><div>This is more than the invoice amount of ${nm(ia,cur)}. Check the amount before you continue. ${fix}</div></div>`; };
-function useInvAmt(){ const d=S.draft; d.recv=d.invAmt; d.last='recv'; calcDraft(); keepScroll=true; render(); }
-function payCheck(){ const mm=$('#mm'); if(mm) mm.innerHTML=partHtml(); const n=$('#nPay'); if(n) n.disabled=!payReady(); }
-function invAmtIn(v){ const d=S.draft; v=v.replace(/[^0-9.]/g,''); const was=invOk(); d.invAmt=v; if(!(parseFloat(d.recv)>0)&&parseFloat(v)>0){ d.recv=v; d.last='recv'; calcDraft(); const r=$('#recvIn'); if(r) r.value=d.recv; const sI=$('#sendIn'); if(sI) sI.value=d.send; } if(invOk()!==was){ keepScroll=true; render(); const e=$('#invAmtIn'); if(e){ e.focus(); e.setSelectionRange(e.value.length,e.value.length); } } else { const il=$('#invl'); if(il) il.innerHTML=invOk()?invLine():''; refreshAmt(); } }
-function pickCountry(k){ const d=S.draft; if(d.cc!==k){ Object.assign(d,{ben:null,invId:null,invNo:'',invAmt:'',invFile:false,other:[]}); d.cc=k; if(d.last==='recv'){ d.last='send'; } calcDraft(); } keepScroll=true; render(); }
+
+function pickBen(id){ Object.assign(S.draft,{ben:id,invNew:false,showAllInv:false,invId:null,invNo:'',invFile:false,other:[]}); if(!S.invoices.some(i=>i.ben===id&&i.status!=='paid')) S.draft.invNew=true; keepScroll=true; render(); }
+
+
+function payCheck(){ const n=$('#nPay'); if(n) n.disabled=!payReady(); }
+
+function pickCountry(k){ const d=S.draft; if(d.cc!==k){ Object.assign(d,{ben:null,invId:null,invNo:'',invNew:false,invFile:false,other:[]}); d.cc=k; if(d.last==='recv'){ d.last='send'; } calcDraft(); } keepScroll=true; render(); }
 function refreshAmt(){ const t=$('#totTxt'); if(t) t.textContent=money(dTot()); const bb=$('#balBox'); if(bb) bb.innerHTML=balLine(); payCheck(); }
 function amtIn(which,v){ const d=S.draft; v=v.replace(/[^0-9.]/g,''); d[which]=v; d.last=which; calcDraft(); const o=which==='send'?$('#recvIn'):$('#sendIn'); if(o) o.value=which==='send'?d.recv:d.send; refreshAmt(); }
-function pickInv(id){ const i=S.invoices.find(x=>x.id===id); const d=S.draft; Object.assign(d,{invId:id,invNo:i.no,invAmt:String(left(i)),invFile:true,other:[]}); if(!(parseFloat(d.recv)>0)){ d.recv=String(left(i)); d.last='recv'; calcDraft(); } keepScroll=true; render(); }
+function pickInv(id){ const i=S.invoices.find(x=>x.id===id); Object.assign(S.draft,{invId:id,invNo:i.no,invNew:false,invFile:true,other:[]}); keepScroll=true; render(); }
 function quoteBlock(){
   const d=S.draft; const c=CORRIDORS[d.cc]; const amt=dAmt();
   return `<div class="row between"><h3 style="margin:0">Current rate</h3><span class="small muted">Refreshes in <span class="countdown" id="qcd">${mmss(S.quoteSecs)}</span></span></div>
@@ -936,8 +950,8 @@ function vReview(){
     <h3 class="mt16" style="font-size:13px;color:var(--g500);text-transform:uppercase;letter-spacing:.5px">Beneficiary</h3>
     ${benFull(b)}
     <hr class="sep"><h3 style="font-size:13px;color:var(--g500);text-transform:uppercase;letter-spacing:.5px">Payment</h3>
-    <div class="kv"><span class="k">Invoice</span><span class="v num">${inv?inv.no+' · '+money(inv.amt,c.cur)+(inv.paid?' · '+money(left(inv),c.cur)+' left':''):d.invNo}</span></div>
-    <div class="kv"><span class="k">Purpose</span><span class="v">${P.name} · ${P.subs[d.sub||0]}</span></div>
+    <div class="kv"><span class="k">Invoice</span><span class="v num">${inv?inv.no:d.invNo}</span></div>
+    <div class="kv"><span class="k">Purpose</span><span class="v">${P.name}</span></div>
     <div class="kv"><span class="k">Source of funds</span><span class="v">${d.sof==='Other'?d.sofOther:d.sof}</span></div>
     <div class="kv"><span class="k">Reference for supplier</span><span class="v num">${(inv?inv.no:d.invNo).slice(0,16)}</span></div>
     <div class="mt8">${docs.map(f=>`<span class="doc-chip" onclick="viewDoc('${f.replace(/'/g,'')}')">${ic.file} ${f}</span>`).join('')}</div>
@@ -966,14 +980,13 @@ function startQuote(elId,onRefresh){ let left=S.quoteSecs; timers.push(setInterv
 function viewDoc(f){ openModal(`<div class="modal-h"><h3>${f}</h3><button class="icon-btn" onclick="closeModal()">${ic.x}</button></div><div class="modal-b"><div class="doc" style="min-height:300px"><b>${f}</b><div class="small muted">Document preview</div>${'<div class="line" style="width:'+[90,70,85,60,80,75,90,50].join('%"></div><div class="line" style="width:')+'%"></div>'}</div></div>`,true); }
 function newPayment(status){
   const d=S.draft; const b=ben(d.ben); const c=CORRIDORS[b.cc]; const inv=d.invId?S.invoices.find(i=>i.id===d.invId):null; const P=PURPOSES[d.purpose];
-  const p={id:'IP-'+(S.seq++),ben:d.ben,aed:dAmt(),recvAmt:+(parseFloat(d.recv)||0).toFixed(2),rate:S.rates[b.cc],status,by:S.persona,at:now(),expires:plusH(24),purpose:d.purpose,inv:inv?inv.no:d.invNo,invAmt:inv?+inv.amt:0,invCur:c.cur,sof:d.sof==='Other'?d.sofOther:d.sof,invId:d.invId,ref:(d.invNo||'').slice(0,16),promo:d.disc?d.promo:'',disc:d.disc||0,
-    sub:P.subs[d.sub||0], docs:[(inv?inv.no:d.invNo)+'.pdf',...invDocs(),...d.other]};
+  const p={id:'IP-'+(S.seq++),ben:d.ben,aed:dAmt(),recvAmt:+(parseFloat(d.recv)||0).toFixed(2),rate:S.rates[b.cc],status,by:S.persona,at:now(),expires:plusH(24),purpose:d.purpose,inv:inv?inv.no:d.invNo,invCur:c.cur,sof:d.sof==='Other'?d.sofOther:d.sof,invId:d.invId,ref:(d.invNo||'').slice(0,16),promo:d.disc?d.promo:'',disc:d.disc||0, docs:[(inv?inv.no:d.invNo)+'.pdf',...invDocs(),...d.other]};
   if(inv){ inv.docs=[...(inv.docs||[]),...d.other]; }
-  else { const ni={id:'I'+(S.invoices.length+1)+'x',ben:d.ben,no:d.invNo,cur:c.cur,amt:p.recvAmt,due:'Not set',status:'unpaid',src:'Uploaded with a payment by '+USERS[S.persona].name,docs:[...d.other]}; S.invoices.push(ni); p.invId=ni.id; }
+  else { const ni={id:'I'+(S.invoices.length+1)+'x',ben:d.ben,no:d.invNo,cur:c.cur,due:'Not set',status:'unpaid',src:'Uploaded with a payment by '+USERS[S.persona].name,docs:[...d.other]}; S.invoices.push(ni); p.invId=ni.id; }
   S.payments.push(p); S.draft=null; return p;
 }
-function submitPay(){ const p=newPayment('awaiting'); notify('admin','Payment waiting for your approval',`${USERS[p.by].name} submitted ${money(total(p))} to ${ben(p.ben).nick}. Expires ${p.expires}.`,'approve:'+p.id); location.hash='#pay-done/'+p.id; }
-function adminPayNow(){ otpFlow('Confirm payment',()=>{ const p=newPayment('awaiting'); executePay(p); location.hash='#txn/'+p.id; toast('Paid. Your payment is on its way.'); }); }
+function submitPay(){ const p=newPayment('awaiting'); notify('admin','Payment waiting for your approval',`${USERS[p.by].name} submitted ${money(total(p))} to ${ben(p.ben).nick}. Expires ${p.expires}.`,'approve:'+p.id); location.replace('#pay-done/'+p.id); }
+function adminPayNow(){ otpFlow('Confirm payment',()=>{ const p=newPayment('awaiting'); executePay(p); location.replace('#txn/'+p.id); toast('Paid. Your payment is on its way.'); }); }
 function vPayDone(id){
   const p=pay(id); const b=ben(p.ben);
   return `<div style="max-width:560px;margin:40px auto;text-align:center"><div class="tag t-yellow" style="width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center">${ic.info}</div>
@@ -984,7 +997,7 @@ function vPayDone(id){
 function executePay(p,rate){
   const b=ben(p.ben); if(rate){ p.rate=rate; if(p.recvAmt) p.aed=+(p.recvAmt/rate).toFixed(2); } p.status='processing'; p.approvedBy='admin'; p.approvedAt=now();
   S.balance-=total(p);
-  if(p.invId){ const i=S.invoices.find(x=>x.id===p.invId); if(i){ i.paid=+((i.paid||0)+recv(p)).toFixed(2); i.status=left(i)<=0.005?'paid':'part'; } }
+  if(p.invId){ const i=S.invoices.find(x=>x.id===p.invId); if(i){ i.status='paid'; } }
   if(p.by==='maker') notify('maker','Payment approved',`Your payment ${p.id} to ${b.nick} was approved and is being processed.`,'#txn/'+p.id);
   setTimeout(()=>{ p.status='sent'; p.sentAt=now(); if(location.hash==='#txn/'+p.id){ keepScroll=true; render(); } },2500);
   setTimeout(()=>{ p.status='completed'; p.done=now(); p.payRef='B2B-'+Math.random().toString(36).slice(2,6).toUpperCase()+'-'+p.id.slice(3); notify(p.by,'Payment completed',`${p.id} to ${b.nick} was paid. Your payment advice is ready.`,'#txn/'+p.id); if(location.hash==='#txn/'+p.id){ keepScroll=true; render(); } },5500);
@@ -1030,7 +1043,6 @@ function renderDrawer(){
     const r = item.status==='pending'? S.rates[b.cc] : p.rate; const tot=totalAt(p,r);
     const flags=[];
     if(item.status==='pending'){
-      const ap=recv(p); if(p.invAmt&&ap<p.invAmt-0.005) flags.push(['a-info',`Part payment: ${money(ap,c.cur)} of invoice ${p.inv} (${money(p.invAmt,p.invCur)}).`]); else if(p.invAmt&&ap>p.invAmt+0.005) flags.push(['a-warn',`More than the invoice: ${money(ap,c.cur)} against invoice ${p.inv} for ${money(p.invAmt,p.invCur)}.`]);
       if(!S.payments.some(x=>x.ben===p.ben&&x.status==='completed')) flags.push(['a-err',`<b>New beneficiary.</b> First payment to ${b.nick}, added by ${USERS[b.addedBy||'maker'].name}${b.addedAt?' on '+b.addedAt:''}. Confirm their bank details with the supplier before you authorize.`]);
       if(b.cpv&&b.cpv.status==='nomatch') flags.push(['a-err',`<b>Name doesn't match.</b> The receiving bank has this account under "${b.cpv.name}", not "${b.name}".`]);
       if(b.cpv&&b.cpv.status==='close') flags.push(['a-warn',`<b>Close name match.</b> The receiving bank has this account under "${b.cpv.name}". Check it's the same company.`]);
@@ -1042,9 +1054,9 @@ function renderDrawer(){
       ${flags.map(([k,t])=>`<div class="alert ${k} mb16"><span class="ic">${ic.warn}</span><div>${t}</div></div>`).join('')}
       <div class="card quote-live mb16" id="dq">${dQuote(p,r)}</div>
       <div class="card mb16"><h3>Beneficiary</h3>${benFull(b)}</div>
-      <div class="card mb16"><div class="row between"><h3 style="margin:0">Invoice ${p.inv}</h3><span class="num">${p.invAmt?money(p.invAmt,p.invCur):''}</span></div>
-        <div class="doc mt8"><div class="row between"><b>${b.name}</b><span class="num">${p.inv}</span></div><div class="small muted">Commercial invoice · Bill to: Al Noor Trading LLC, Dubai</div><div class="line" style="width:90%"></div><div class="line" style="width:70%"></div>${p.invAmt?`<div class="row between mt8"><span>Total due</span><b class="num">${money(p.invAmt,p.invCur)}</b></div>`:''}</div>
-        <div class="kv mt8"><span class="k">Purpose</span><span class="v">${PURPOSES[p.purpose].name}${p.sub?' · '+p.sub:''}</span></div><div class="kv"><span class="k">Source of funds</span><span class="v">${p.sof}</span></div><div class="kv"><span class="k">Reference</span><span class="v">${p.ref||'None'}</span></div>
+      <div class="card mb16"><div class="row between"><h3 style="margin:0">Invoice ${p.inv}</h3><button class="btn btn-sm btn-ghost" onclick="viewDoc('${p.inv.replace(/[^A-Za-z0-9-]/g,'')}.pdf')">View</button></div>
+        <div class="doc mt8"><div class="row between"><b>${b.name}</b><span class="num">${p.inv}</span></div><div class="small muted">Commercial invoice · Bill to: Al Noor Trading LLC, Dubai</div><div class="line" style="width:90%"></div><div class="line" style="width:70%"></div></div>
+        <div class="kv mt8"><span class="k">Purpose</span><span class="v">${PURPOSES[p.purpose].name}</span></div><div class="kv"><span class="k">Source of funds</span><span class="v">${p.sof}</span></div><div class="kv"><span class="k">Reference</span><span class="v">${p.ref||'None'}</span></div>
         <div class="mt8">${(p.docs||[]).map(f=>`<span class="doc-chip" onclick="viewDoc('${f}')">${ic.file} ${f}</span>`).join('')}</div></div>`;
   } else if(item.kind==='ben'){
     const b=ben(item.ref); const c=CORRIDORS[b.cc];
@@ -1223,7 +1235,7 @@ function addInvoice(){
   <div class="field"><label class="f">Supplier</label><div class="row" style="gap:8px"><select class="input">${S.beneficiaries.filter(b=>b.status==='active').map(b=>`<option>${b.nick} · ${CORRIDORS[b.cc].name}</option>`).join('')}</select><button class="btn btn-secondary" style="height:44px" onclick="startBen()">+ New supplier</button></div></div>
   <div class="upload">${ic.up}<div>Upload the invoice</div></div>
   <div class="grid g2 mt16"><div class="field"><label class="f">Invoice number</label><input class="input" autocomplete="off"></div><div class="field"><label class="f">Due date</label><input class="input" type="date"></div></div>
-  <div class="field"><label class="f">Amount and currency</label><input class="input" autocomplete="off" placeholder="e.g. 50,440 CNY"></div></div>
+</div>
   <div class="modal-f"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();toast('Invoice saved (prototype)')">Save invoice</button></div>`);
 }
 function inviteSupplier(){
@@ -1247,7 +1259,7 @@ function scen(fn){ S=seed(); closeModal(); closeDrawer(true); fn(); render(); }
 const SCEN=[
   ['Maker submits, Admin approves','After approval the payment moves through Processing, Money sent and Completed. Omar reviews Sara\'s payment in the approvals module: current rate, wallet balance, invoice and documents. Authorize with password and OTP.',()=>{S.persona='admin';location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open approval'],
   ['Maker creates a payment','One page: amount and currency, beneficiary, invoice and purpose. Then review and submit.',()=>{S.persona='maker';S.introSeen=true;startPay();},'Start'],
-  ['Pay from a supplier invoice','Choose an unpaid invoice and pay it; amount and supplier are filled in.',()=>{S.persona='maker';S.introSeen=true;location.hash='#invoices';},'Open'],
+  ['Pay from a supplier invoice','Choose an unpaid invoice and pay it; the supplier and invoice are filled in, you enter the amount.',()=>{S.persona='maker';S.introSeen=true;location.hash='#invoices';},'Open'],
   ['Not enough money','Shortfall shown while typing, with three ways to add money.',()=>{S.persona='maker';S.balance=1200;S.introSeen=true;startPay('HK','B3');S.draft.lockBen=false;S.draft.send='5000';S.draft.last='send';calcDraft();},'Try it'],
   ['Rate refreshes before approval','The rate refresh is shortened to 10 seconds here so you can see it update.',()=>{S.persona='admin';S.quoteSecs=10;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open'],
   ['Approval request expired','Nobody approved in time. Shown as Expired; no money taken.',()=>{location.hash='#txn/IP-10236';},'Open'],
