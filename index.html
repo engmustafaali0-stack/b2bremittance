@@ -63,7 +63,7 @@ h3{font-size:15px;font-weight:600;margin:0 0 8px}
 .card{background:#fff;border:1px solid var(--g300);border-radius:var(--r-md);padding:20px}
 .card.flat{border:0;box-shadow:var(--shadow-sm)}
 .grid{display:grid;gap:16px}
-.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.g2{grid-template-columns:1fr 1fr}.stepn{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--blue-600);color:#fff;font-size:13px;margin-right:8px;vertical-align:2px}.seg{display:inline-flex;gap:4px;background:var(--g100);border-radius:12px;padding:4px;flex-wrap:wrap}.seg button{border:0;background:transparent;padding:8px 14px;border-radius:9px;font:inherit;font-weight:600;font-size:13px;color:var(--g600);cursor:pointer;display:inline-flex;align-items:center;gap:6px}.seg button.on{background:#fff;color:var(--blue-600);box-shadow:0 1px 2px rgba(0,0,0,.08)}.seg button:disabled{opacity:.45;cursor:not-allowed}.seg .c{background:var(--blue-50);color:var(--blue-600);border-radius:999px;padding:0 7px;font-size:11px}.click-card{color:inherit;text-decoration:none}.click-card:hover{border-color:var(--blue-400)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
 .g-main{grid-template-columns:minmax(0,1fr) 340px}
 .row{display:flex;align-items:center;gap:12px}
 .between{justify-content:space-between}
@@ -372,11 +372,11 @@ const FIELDS = {
   US_bank:[['Registered company name','Pacific Components Inc.'],['Account number','4410 2290 3008'],['ABA routing number','026009593'],['SWIFT code','BOFAUS3N'],['Company address','500 Market St, San Francisco']]
 };
 const PURPOSES = {
-  goods:{name:'Goods purchase',docs:[['Bill of lading or airway bill',false],['Purchase order or contract',false]]},
-  services:{name:'Services',docs:[['Service agreement',true]]},
-  logistics:{name:'Freight and logistics',docs:[['Bill of lading or airway bill',true]]},
-  professional:{name:'Professional fees',docs:[['Engagement letter or contract',true]]},
-  other:{name:'Other',docs:[['Supporting document',true]]}
+  goods:{name:'Goods purchase',subs:['Payment for goods','Advance payment for goods'],docs:[['Bill of lading or airway bill',false],['Purchase order or contract',false]]},
+  services:{name:'Services',subs:['Service fees','Advance payment for services'],docs:[['Service agreement',true]]},
+  logistics:{name:'Freight and logistics',subs:['Freight charges','Customs and clearing charges'],docs:[['Bill of lading or airway bill',true]]},
+  professional:{name:'Professional fees',subs:['Consulting fees','Legal and accounting fees'],docs:[['Engagement letter or contract',true]]},
+  other:{name:'Other',subs:['Other business payment'],docs:[['Supporting document',true]]}
 };
 const USERS = {admin:{name:'Omar Haddad',first:'Omar',role:'Admin',init:'OH'},maker:{name:'Sara Khan',first:'Sara',role:'Finance · maker',init:'SK'},paul:{name:'Paul Mathew',first:'Paul',role:'Operations',init:'PM'}};
 const feeFor = cur => cur==='USD' ? 25 : 15;
@@ -408,14 +408,14 @@ function seed(){
       {id:'B6',name:'Pacific Components Inc.',nick:'Pacific Components',cc:'US',method:'bank',acct:'•••• 3008',bank:'Bank of America',status:'active',addedBy:'maker',addedAt:plusH(-2),known:true,screened:true,fields:'US_bank',cpv:{status:'na'}}
     ],
     invoices:[
-      {id:'I1',ben:'B1',no:'HT-2026-1187',cur:'CNY',amt:50440,due:'2 Nov 2026',status:'unpaid',src:'Uploaded by supplier'},
-      {id:'I2',ben:'B2',no:'MT/26-27/0419',cur:'INR',amt:163500,due:'25 Oct 2026',status:'overdue',src:'Added by Sara Khan'},
+      {id:'I1',ben:'B1',no:'HT-2026-1187',cur:'CNY',amt:50440,due:'2 Nov 2026',status:'unpaid',src:'Uploaded by supplier',docs:['bill-of-lading-OCT.pdf']},
+      {id:'I2',ben:'B2',no:'MT/26-27/0419',cur:'INR',amt:163500,paid:63500,due:'25 Oct 2026',status:'overdue',src:'Added by Sara Khan',docs:['purchase-order-PO-7781.pdf']},
       {id:'I3',ben:'B3',no:'KP-88213',cur:'HKD',amt:25420,due:'29 Oct 2026',status:'unpaid',src:'Uploaded by supplier'},
       {id:'I4',ben:'B5',no:'RW-2026-3391',cur:'EUR',amt:5150,due:'14 Nov 2026',status:'unpaid',src:'Added by Omar Haddad'},
       {id:'I5',ben:'B1',no:'HT-2026-1102',cur:'CNY',amt:35910,due:'10 Oct 2026',status:'paid',src:'Uploaded by supplier'}
     ],
     payments:[
-      {id:'IP-10241',ben:'B1',aed:26000,rate:1.9412,status:'awaiting',by:'maker',at:'29 Oct, 12:50',expires:'30 Oct, 12:50',purpose:'goods',inv:'HT-2026-1187',invAmt:50440,invCur:'CNY',sof:'Company funds',docs:['HT-2026-1187.pdf','bill-of-lading-OCT.pdf'],ref:'HT-2026-1187'},
+      {id:'IP-10241',ben:'B1',aed:25984.96,recvAmt:50440,rate:1.9412,status:'awaiting',by:'maker',at:'29 Oct, 12:50',expires:'30 Oct, 12:50',purpose:'goods',inv:'HT-2026-1187',invAmt:50440,invCur:'CNY',sof:'Company funds',docs:['HT-2026-1187.pdf','bill-of-lading-OCT.pdf'],ref:'HT-2026-1187'},
       {id:'IP-10231',ben:'B1',aed:18500,rate:1.9387,status:'completed',by:'admin',at:'14 Oct, 09:12',sentAt:'14 Oct, 09:13',done:'14 Oct, 16:40',purpose:'goods',inv:'HT-2026-1102',invAmt:35910,invCur:'CNY',sof:'Company funds',payRef:'B2B-77Q4-1031',docs:['HT-2026-1102.pdf']},
       {id:'IP-10235',ben:'B2',aed:7200,rate:22.701,status:'sent',by:'maker',approvedBy:'admin',approvedAt:'28 Oct, 15:20',at:'28 Oct, 15:05',sentAt:'28 Oct, 15:21',purpose:'goods',inv:'MT/26-27/0388',invAmt:163440,invCur:'INR',sof:'Company funds',docs:['MT-0388.pdf']},
       {id:'IP-10238',ben:'B3',aed:12000,rate:2.1179,status:'pending_info',by:'maker',approvedBy:'admin',approvedAt:plusH(-1),at:plusH(-1.5),infoAt:plusH(-0.5),infoDue:plusH(4.5),purpose:'logistics',inv:'KP-88102',invAmt:25414,invCur:'HKD',sof:'Company funds',docs:['KP-88102.pdf']},
@@ -455,8 +455,11 @@ const me = () => USERS[S.persona];
 const isAdmin = () => S.persona==='admin';
 const money = (n,cur='AED',d=2) => `${cur} ${Number(n).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d})}`;
 const nm = (n,cur='AED',d=2) => `<span class="num">${money(n,cur,d)}</span>`;
+const left = i => +(i.amt-(i.paid||0)).toFixed(2);
 const total = p => { const cur=CORRIDORS[ben(p.ben).cc].cur; return p.aed + feeDue(cur,p.disc||0); };
-const recv = p => p.aed * p.rate;
+const recv = p => p.recvAmt ? p.recvAmt : p.aed * p.rate;
+const aedAt = (p,r) => p.recvAmt ? +(p.recvAmt/r).toFixed(2) : p.aed;
+const totalAt = (p,r) => aedAt(p,r) + feeDue(CORRIDORS[ben(p.ben).cc].cur,p.disc||0);
 const methodOf = b => CORRIDORS[b.cc].methods.find(m=>m.id===b.method);
 const etaOf = b => methodOf(b).eta;
 const benFields = b => b.vals ? FIELDS[b.cc+'_'+b.method].map(([l],i)=>[l,b.vals[i]]) : (b.fields?FIELDS[b.fields].map(([l,ex])=>[l,ex]):[['Registered company name',b.name]]);
@@ -661,13 +664,41 @@ function vSend(){
 const intlTabs = act => `<div class="tabs"><a href="#intl" class="${act==='p'?'active':''}">Payments <span class="c">${S.payments.length}</span></a><a href="#invoices" class="${act==='i'?'active':''}">Supplier invoices <span class="c">${S.invoices.filter(i=>i.status!=='paid').length}</span></a><a href="#beneficiaries" class="${act==='b'?'active':''}">Beneficiaries <span class="c">${S.beneficiaries.length}</span></a></div>`;
 function vIntl(){
   const pays = S.payments.slice().sort((x,y)=>x.id<y.id?1:-1);
+  const due=S.invoices.filter(i=>i.status!=='paid').sort((x,y)=>(x.status==='overdue'?0:1)-(y.status==='overdue'?0:1));
+  const inProg=S.payments.filter(p=>['awaiting','processing','sent','pending_info','review'].includes(p.status)).length;
   return `<div class="row between mb24" style="flex-wrap:wrap"><div><h1>International payments</h1><p class="sub-title" style="margin:0">Pay suppliers abroad from your AED balance.</p></div><button class="btn btn-primary" onclick="startPay()">New payment</button></div>
+  <div class="grid g4 mb16">
+    <a class="card stat click-card" href="#invoices"><div class="k">Invoices to pay</div><div class="v num">${due.length}</div><div class="small muted">Open supplier invoices</div></a>
+    <a class="card stat click-card" href="#invoices"><div class="k">Overdue</div><div class="v num" style="color:var(--red600)">${due.filter(i=>i.status==='overdue').length}</div><div class="small muted">Past due, pay now</div></a>
+    <div class="card stat"><div class="k">In progress</div><div class="v num">${inProg}</div><div class="small muted">Awaiting approval or on the way</div></div>
+    <div class="card stat"><div class="k">Completed</div><div class="v num">${S.payments.filter(p=>p.status==='completed').length}</div><div class="small muted">Credited to the supplier</div></div>
+  </div>
+  <div class="grid g-main mb24">
+    <div class="card" style="align-self:start"><div class="row between mb8"><h3 style="margin:0">Invoices to pay</h3><a href="#invoices" class="small">View all invoices</a></div>
+      ${due.length?due.slice(0,4).map(i=>{const b=ben(i.ben);const c=CORRIDORS[b.cc];return `<div class="list-item"><span class="flag">${c.flag}</span><div class="li-main"><div class="t">${b.nick} · <span class="num">${i.no}</span></div><div class="s">Due ${i.due}${i.status==='overdue'?' · <span style="color:var(--red600);font-weight:600">Overdue</span>':''}</div></div><div class="num" style="font-weight:600;margin-right:12px;text-align:right">${money(left(i),i.cur,0)}${i.paid?'<div class="small muted" style="font-weight:400">left to pay</div>':''}</div><button class="btn btn-sm btn-primary" onclick="payInvoice('${i.id}')">Pay</button></div>`}).join(''):'<p class="muted">No open invoices.</p>'}
+    </div>
+    <div class="card" style="align-self:start">${calcCard()}</div>
+  </div>
+  <h2>Payments</h2>
   ${intlTabs('p')}
   <div class="card" style="padding:8px 8px 0"><div class="table-wrap"><table>
     <thead><tr><th>Reference</th><th>Beneficiary</th><th>You send</th><th>They receive</th><th>Created</th><th>Status</th></tr></thead>
     <tbody>${pays.map(p=>{const b=ben(p.ben);const c=CORRIDORS[b.cc];return `<tr class="click" onclick="location.hash='#txn/${p.id}'"><td class="num" style="font-weight:600">${p.id}</td><td><div class="row" style="gap:8px"><span class="flag">${c.flag}</span><div><div style="font-weight:600">${b.nick}</div><div class="small muted">${c.name} · ${b.acct}</div></div></div></td><td>${nm(total(p))}</td><td>${nm(recv(p),c.cur)}</td><td class="small muted">${p.at}<br>by ${USERS[p.by].name}</td><td>${tag(p.status)}</td></tr>`}).join('')}</tbody>
   </table></div></div>`;
 }
+function calcCard(){
+  const k=S.calc||(S.calc={cc:'IN',send:'10000',recv:''}); const c=CORRIDORS[k.cc]; const r=S.rates[k.cc];
+  if(k.last!=='recv'){ const v=parseFloat(k.send); k.recv=isNaN(v)?'':(v*r).toFixed(2); } else { const v=parseFloat(k.recv); k.send=isNaN(v)?'':(v/r).toFixed(2); }
+  return `<h3 style="margin:0 0 4px">Exchange calculator</h3><div class="small muted mb16">Today's rate and fee, before you pick a supplier.</div>
+    <label class="f">Currency</label><select class="input mb16" onchange="S.calc.cc=this.value;keepScroll=true;render()">${Object.entries(CORRIDORS).map(([kk,x])=>`<option value="${kk}" ${k.cc===kk?'selected':''}>${x.flag} ${x.cur} · ${x.name}</option>`).join('')}</select>
+    <div class="calc"><div class="cside"><div class="lbl">You send</div><div class="in"><span class="cur">🇦🇪 AED</span><input id="cSend" style="text-align:right;font-size:20px" inputmode="decimal" autocomplete="off" value="${k.send}" oninput="calcIn('send',this.value)"></div></div>
+    <div class="mid"><span class="rate-pill">1 AED = <span class="num">${r.toFixed(4)}</span> ${c.cur}</span><span>Fee ${money(feeFor(c.cur))} + VAT ${money(vatFor(c.cur))}</span></div>
+    <div class="cside"><div class="lbl">They receive</div><div class="in"><span class="cur">${c.flag} ${c.cur}</span><input id="cRecv" style="text-align:right;font-size:20px" inputmode="decimal" autocomplete="off" value="${k.recv}" oninput="calcIn('recv',this.value)"></div></div></div>
+    <div class="small muted mt8">Indicative. The rate is fixed when your Admin approves the payment.</div>
+    <button class="btn btn-primary btn-block mt16" onclick="startPay(S.calc.cc,null,null,S.calc.recv)">Start payment to ${c.name}</button>`;
+}
+function calcIn(which,v){ const k=S.calc; v=v.replace(/[^0-9.]/g,''); k[which]=v; k.last=which; const r=S.rates[k.cc];
+  if(which==='send'){ const x=parseFloat(v); k.recv=isNaN(x)?'':(x*r).toFixed(2); const e=$('#cRecv'); if(e) e.value=k.recv; } else { const x=parseFloat(v); k.send=isNaN(x)?'':(x/r).toFixed(2); const e=$('#cSend'); if(e) e.value=k.send; } }
 function vIntro(){
   return `<div class="intro-hero">
     <div><span class="tag" style="background:rgba(255,255,255,.15);color:#fff">New in botim business</span>
@@ -682,14 +713,14 @@ function vIntro(){
       <div class="mini"><span>🇹🇷 🇩🇪 🇺🇸 and more</span><span class="small">1 to 3 business days</span></div>
     </div></div>
   <div class="how">
-    <div class="card"><div class="n">1</div><h3>Choose where and how much</h3><div class="muted">Pick the country and enter what you send in AED, or what your supplier should receive. The fee is shown upfront.</div></div>
-    <div class="card"><div class="n">2</div><h3>Pick your supplier and invoice</h3><div class="muted">Choose a saved supplier or add a new one, attach the invoice and documents.</div></div>
+    <div class="card"><div class="n">1</div><h3>Pick your supplier</h3><div class="muted">Choose a saved supplier or add a new one. You see today's rate and fee straight away.</div></div>
+    <div class="card"><div class="n">2</div><h3>Add the invoice</h3><div class="muted">Pick an open invoice or upload one. Your supplier receives the invoice amount, or part of it if you choose.</div></div>
     <div class="card"><div class="n">3</div><h3>Approve and track</h3><div class="muted">Your Admin approves with password and OTP. Download the payment advice when it's completed.</div></div>
   </div>`;
 }
 function vInvoices(){
   const rows=S.invoices.slice().sort((x,y)=>({overdue:0,unpaid:1,paid:2}[x.status]-{overdue:0,unpaid:1,paid:2}[y.status]));
-  const st={overdue:['Overdue','t-red'],unpaid:['Unpaid','t-yellow'],paid:['Paid','t-green']};
+  const st={overdue:['Overdue','t-red'],unpaid:['Unpaid','t-yellow'],part:['Part paid','t-blue'],paid:['Paid','t-green']};
   return `<div class="row between mb24" style="flex-wrap:wrap"><div><h1>International payments</h1><p class="sub-title" style="margin:0">Invoices from your overseas suppliers.</p></div>
   <div class="row"><button class="btn btn-secondary" onclick="inviteSupplier()">Request invoice from supplier</button><button class="btn btn-primary" onclick="addInvoice()">Add invoice</button></div></div>
   ${intlTabs('i')}
@@ -701,7 +732,7 @@ function vInvoices(){
   </div>
   <div class="card" style="padding:8px 8px 0"><div class="table-wrap"><table>
   <thead><tr><th>Supplier</th><th>Invoice number</th><th>Amount</th><th>Due date</th><th>Source</th><th>Status</th><th></th></tr></thead>
-  <tbody>${rows.map(i=>{const b=ben(i.ben);return `<tr><td><div class="row" style="gap:8px"><span class="flag">${CORRIDORS[b.cc].flag}</span><b>${b.nick}</b></div></td><td class="num">${i.no}</td><td>${nm(i.amt,i.cur,0)}</td><td>${i.due}</td><td class="small muted">${i.src}</td><td><span class="tag ${st[i.status][1]}">${st[i.status][0]}</span></td><td>${i.status!=='paid'?`<button class="btn btn-sm btn-primary" onclick="payInvoice('${i.id}')">Pay</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>`;
+  <tbody>${rows.map(i=>{const b=ben(i.ben);return `<tr><td><div class="row" style="gap:8px"><span class="flag">${CORRIDORS[b.cc].flag}</span><b>${b.nick}</b></div></td><td class="num">${i.no}</td><td>${nm(i.amt,i.cur,0)}${i.paid?`<div class="small muted">${money(left(i),i.cur,0)} left</div>`:''}</td><td>${i.due}</td><td class="small muted">${i.src}</td><td><span class="tag ${st[i.status][1]}">${st[i.status][0]}</span></td><td>${i.status!=='paid'?`<button class="btn btn-sm btn-primary" onclick="payInvoice('${i.id}')">Pay</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>`;
 }
 function vBens(){
   return `<div class="row between mb24" style="flex-wrap:wrap"><div><h1>International payments</h1><p class="sub-title" style="margin:0">Businesses you pay abroad.</p></div><button class="btn btn-primary" onclick="startBen()">Add beneficiary</button></div>
@@ -778,56 +809,65 @@ function vBen(id){
 function benInfoSend(id){ const b=ben(id); b.needInfo=false; toast('Sent. We\'ll check it shortly.'); screenBen(b); keepScroll=true; render(); }
 
 /* ================= PAYMENT FLOW (2 steps) ================= */
-function startPay(cc,benId,invId){
+function startPay(cc,benId,invId,recvPreset){
   if(S.disabled){ location.hash='#intl'; return; }
   S.introSeen=true; tick();
-  const inv = invId? S.invoices.find(i=>i.id===invId):null;
-  S.draft={cc:cc||'CN',ben:benId||null,send:'',recv:'',last:'send',invId:invId||null,invNo:inv?inv.no:'',invAmt:inv?inv.amt:'',invFile:!!inv,purpose:'goods',sof:'Company funds',docs:{},other:[],lockBen:!!invId,fromInv:!!inv,promo:'',disc:0,promoErr:''};
-  if(inv){ S.draft.last='recv'; S.draft.recv=String(inv.amt); calcDraft(); }
-  location.hash='#pay/1'; render();
+  const inv = invId? S.invoices.find(i=>i.id===invId):null; const b0 = benId? ben(benId):null;
+  S.draft={cc:b0?b0.cc:(cc||'CN'),ben:benId||null,send:'',recv:'',last:'recv',invId:invId||null,invNo:inv?inv.no:'',invAmt:inv?String(left(inv)):'',invFile:!!inv,purpose:'goods',sub:0,sof:'Company funds',other:[],lockBen:!!invId,fromInv:!!inv,promo:'',disc:0,promoErr:''};
+  if(inv){ S.draft.recv=String(left(inv)); }
+  else if(recvPreset){ S.draft.recv=String(recvPreset); }
+  calcDraft(); location.hash='#pay/1'; render();
 }
 function payInvoice(id){ const i=S.invoices.find(x=>x.id===id); startPay(ben(i.ben).cc,i.ben,id); }
 function calcDraft(){
-  const d=S.draft; if(!d.cc) return; const r=S.rates[d.cc];
+  const d=S.draft; if(!d||!d.cc) return; const r=S.rates[d.cc];
   if(d.last==='send'){ const v=parseFloat(d.send); d.recv = isNaN(v)?'':(v*r).toFixed(2); }
   else { const v=parseFloat(d.recv); d.send = isNaN(v)?'':(v/r).toFixed(2); }
 }
 const dAmt = () => parseFloat(S.draft.send)||0;
-const dTot = () => { const a=dAmt(); return a? a+feeDue(CORRIDORS[S.draft.cc].cur,S.draft.disc||0):0; };
+const dTot = () => { const a=dAmt(); return a&&S.draft.cc? a+feeDue(CORRIDORS[S.draft.cc].cur,S.draft.disc||0):0; };
 function shortfallOptions(need){
-  return `<div class="card mt16" style="border-color:var(--red600)"><div class="row" style="gap:10px;align-items:flex-start;color:#7F1D1D"><span>${ic.warn}</span><div><b>Not enough balance.</b> You need ${nm(need)} more. Add money to continue:</div></div>
+  return `<div class="card mt16" style="border-color:var(--red600)"><div class="row" style="gap:10px;align-items:flex-start;color:#7F1D1D"><span>${ic.warn}</span><div><b>Not enough balance.</b> You need about ${nm(need)} more. Add money to continue:</div></div>
     <div class="grid mt16" style="gap:8px">
       <button class="choice" onclick="topUp()"><div class="row between"><div><div class="t">Bank transfer to your botim IBAN</div><div class="s">From any UAE bank. Usually arrives within minutes.</div></div>${ic.arrow}</div></button>
       <button class="choice" onclick="cardTopUp(${need})"><div class="row between"><div><div class="t">Top up with a UAE debit card</div><div class="s">Instant top-up to your balance</div></div>${ic.arrow}</div></button>
       <button class="choice" onclick="toast('Opens the botim loan request journey (out of scope)')"><div class="row between"><div><div class="t">Get a botim business loan</div><div class="s">Request financing for this payment</div></div>${ic.arrow}</div></button>
     </div></div>`;
 }
-const balLine = () => { const t=dTot(); return t>S.balance ? shortfallOptions(t-S.balance) : (t?`<div class="small mt8" style="color:var(--green600);display:flex;gap:6px;align-items:center">${ic.ok} Covered by your balance of ${money(S.balance)}</div>`:''); };
-const payReady = () => { const d=S.draft; const b=d.ben&&ben(d.ben); const P=PURPOSES[d.purpose]; return dAmt()>0 && dTot()<=S.balance && b && b.status==='active' && (d.invId||(d.invFile&&d.invNo)) && P.docs.every(([n,req],i)=>!req||d.docs[i]) && (d.sof!=='Other'||d.sofOther); };
+const balLine = () => { const t=dTot(); return t>S.balance ? shortfallOptions(Math.ceil((t-S.balance)*100)/100) : (t?`<div class="small mt8" style="color:var(--green600);display:flex;gap:6px;align-items:center">${ic.ok} Covered by your balance of ${money(S.balance)}</div>`:''); };
+const invMode = () => { const d=S.draft; if(d.invMode) return d.invMode; const b=d.ben&&ben(d.ben); return b&&S.invoices.some(i=>i.ben===b.id&&i.status!=='paid')?'existing':'new'; };
+function invNoIn(v){ const was=invOk(); S.draft.invNo=v; if(invOk()!==was){ keepScroll=true; render(); const e=$('#invNoIn'); if(e){ e.focus(); e.setSelectionRange(e.value.length,e.value.length); } } else payCheck(); }
+function setInvMode(m){ Object.assign(S.draft,{invMode:m,invId:null,invNo:'',invAmt:'',invFile:false,other:[]}); keepScroll=true; render(); }
+const invLine = () => { const d=S.draft; const c=CORRIDORS[d.cc]; const i=d.invId?S.invoices.find(x=>x.id===d.invId):null;
+  return `<div class="alert a-info mt16" style="align-items:center"><span class="ic">${ic.file}</span><div style="flex:1"><b>Paying invoice <span class="num">${d.invNo}</span></b><div class="small">${money(i.amt,i.cur,0)} · due ${i.due}${i.paid?` · ${money(left(i),i.cur,0)} left to pay`:''}${i.status==='overdue'?' · <span style="color:var(--red600)">Overdue</span>':''}</div></div><button class="btn btn-sm btn-secondary" onclick="viewDoc('${i.no.replace(/'/g,'')}.pdf')">View invoice</button></div>`; };
+const invOk = () => { const d=S.draft; return d.invId || (d.invFile && d.invNo); };
+const payReady = () => { const d=S.draft; const b=d.ben&&ben(d.ben); return b && b.status==='active' && invOk() && parseFloat(d.recv)>0 && dTot()<=S.balance && (d.sof!=='Other'||d.sofOther); };
+const rateLine = cc => { const c=CORRIDORS[cc]; return `1 AED = <span class="num">${S.rates[cc].toFixed(4)}</span> ${c.cur} · fee ${money(feeFor(c.cur))} + VAT`; };
 function vPay(step){
   const d=S.draft; if(!d){ setTimeout(()=>startPay(),0); return ''; }
   step=+step||1;
   const head=`<div class="crumbs"><a href="#intl">International payments</a> / New payment</div><h1>${step===1?'New international payment':'Review payment'}</h1><p class="sub-title">${step===1?'Pay an overseas supplier from your AED balance.':'Check everything before you submit.'}</p>`;
   if(step===2) return head+vReview();
-  const c=CORRIDORS[d.cc]; const b=d.ben?ben(d.ben):null; const fee=feeFor(c.cur); const vat=vatFor(c.cur);
+  const c=CORRIDORS[d.cc]; const b=d.ben?ben(d.ben):null;
   const list=d.lockBen? [b] : S.beneficiaries.filter(x=>x.cc===d.cc);
   const invs=b?S.invoices.filter(i=>i.ben===b.id&&i.status!=='paid'):[];
-  const P=PURPOSES[d.purpose]; const approx=parseFloat(d.recv)||0; const ia=+d.invAmt||0;
-  const reqDocs=P.docs.map((x,i)=>[...x,i]).filter(x=>x[1]);
+  const P=PURPOSES[d.purpose]; const sugg=P.docs.map(x=>x[0].toLowerCase()).join(', ');
   return head+`<div style="max-width:760px">
   <div class="card">
+    <h2><span class="stepn">1</span> Amount</h2>
     <div class="calc">
-      <div class="cside"><div class="row between"><div class="lbl">You send</div><div class="small muted">Fee ${money(fee)} + VAT ${money(vat)}</div></div><div class="in"><span class="cur">🇦🇪 AED</span><input id="sendIn" style="text-align:right" inputmode="decimal" autocomplete="off" value="${d.send}" placeholder="0.00" oninput="amtIn('send',this.value)"></div></div>
+      <div class="cside"><div class="row between"><div class="lbl">You send</div><div class="small muted">Fee ${money(feeFor(c.cur))} + VAT ${money(vatFor(c.cur))}</div></div><div class="in"><span class="cur">🇦🇪 AED</span><input id="sendIn" style="text-align:right" inputmode="decimal" autocomplete="off" value="${d.send}" placeholder="0.00" oninput="amtIn('send',this.value)"></div></div>
       <div class="mid"><span class="rate-pill">1 AED = <span class="num">${S.rates[d.cc].toFixed(4)}</span> ${c.cur}</span><span>Total from balance <b class="num" id="totTxt">${money(dTot())}</b></span></div>
       <div class="cside"><div class="lbl">They receive</div><div class="in">
         ${d.lockBen?`<span class="cur">${c.flag} ${c.cur}</span>`:`<select class="input" style="width:auto;height:40px;font-weight:700" onchange="pickCountry(this.value)">${Object.entries(CORRIDORS).map(([k,x])=>{const off=S.pausedCorridor===k;return `<option value="${k}" ${d.cc===k?'selected':''} ${off?'disabled':''}>${x.flag} ${x.cur} · ${x.name}${off?' (paused)':''}</option>`}).join('')}</select>`}
         <input id="recvIn" style="text-align:right" inputmode="decimal" autocomplete="off" value="${d.recv}" placeholder="0.00" oninput="amtIn('recv',this.value)"></div></div>
     </div>
+    <div class="small muted mt8">Indicative rate. Your supplier receives exactly the amount above; the AED total is fixed at the rate when your Admin approves.</div>
     ${S.pausedCorridor?`<div class="alert a-warn mt8"><span class="ic">${ic.warn}</span><div>Payments to ${CORRIDORS[S.pausedCorridor].name} are paused for now. We'll show it again as soon as it's back.</div></div>`:''}
     <div id="balBox">${balLine()}</div>
   </div>
   <div class="card mt16">
-    <div class="row between mb16"><h2 style="margin:0">${d.lockBen?'Paying':'Choose beneficiary'}</h2>${d.lockBen?'':`<a href="#beneficiaries" class="small">View all</a>`}</div>
+    <div class="row between mb16"><h2 style="margin:0"><span class="stepn">2</span> ${d.lockBen?'Paying':'Beneficiary'}</h2>${d.lockBen?'':`<a href="#beneficiaries" class="small">View all</a>`}</div>
     <div class="grid g3">
       ${d.lockBen?'':`<button class="choice" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--blue-600)" onclick="startBen('${d.cc}',true)"><span style="font-size:22px">+</span><span class="t">New beneficiary</span><span class="s">in ${c.name}</span></button>`}
       ${list.map(x=>{const off=x.status!=='active';return `<button class="choice ${d.ben===x.id?'sel':''} ${off?'disabled':''}" ${off||d.lockBen?'':`onclick="pickBen('${x.id}')"`}><div class="row between"><span class="tag t-gray" style="padding:2px 8px">${c.flag} ${c.cur}</span>${off?btag(x):''}</div><div class="t mt8" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.nick}</div><div class="s">${x.bank} ${x.acct}</div><div class="s">${etaOf(x)}</div></button>`}).join('')}
@@ -835,71 +875,88 @@ function vPay(step){
     ${!list.length?`<p class="small muted mt8">No saved beneficiaries in ${c.name} yet.</p>`:''}
   </div>
   ${b&&b.status==='active'?`<div class="card mt16">
-    <h2>Invoice and purpose</h2>
-    ${invs.length?`<div class="chips mb16">${invs.map(i=>`<button class="cc-btn ${d.invId===i.id?'sel':''}" ${d.lockBen?'':`onclick="pickInv('${i.id}')"`}>${ic.file} <span class="num">${i.no}</span> · ${money(i.amt,i.cur,0)}</button>`).join('')}${d.lockBen?'':`<button class="cc-btn ${!d.invId?'sel':''}" onclick="S.draft.invId=null;S.draft.invNo='';S.draft.invAmt='';S.draft.invFile=false;keepScroll=true;render()">${ic.up} Upload new</button>`}</div>`:''}
-    ${!d.invId?`<div class="upload ${d.invFile?'done':''}" onclick="S.draft.invFile=true;keepScroll=true;render()">${d.invFile?ic.ok+' <span>supplier-invoice.pdf · 182 KB</span>':ic.up+'<div>Upload the invoice</div><div class="small">PDF, JPG or PNG, up to 5 MB</div>'}</div>
-    <div class="field mt16"><label class="f">Invoice number</label><input class="input" autocomplete="off" value="${d.invNo}" oninput="S.draft.invNo=this.value;payCheck()" placeholder="As shown on the invoice"><div class="help">We use it as the reference on your supplier's bank statement.</div></div>`:''}
-    <div id="mm">${approx&&ia&&Math.abs(ia-approx)/ia>0.02?mmHtml(ia,approx,c.cur):''}</div>
-    <div class="field mt8"><label class="f">Purpose</label><select class="input" onchange="S.draft.purpose=this.value;S.draft.docs={};keepScroll=true;render()">${Object.entries(PURPOSES).map(([k,p])=>`<option value="${k}" ${d.purpose===k?'selected':''}>${p.name}</option>`).join('')}</select></div>
+    <h2><span class="stepn">3</span> Invoice</h2>
+    ${d.lockBen?'':`<div class="seg mb16"><button class="${invMode()==='existing'?'on':''}" ${invs.length?'':'disabled'} onclick="setInvMode('existing')">${ic.file} Select from my invoices${invs.length?` <span class="c">${invs.length}</span>`:''}</button><button class="${invMode()==='new'?'on':''}" onclick="setInvMode('new')">${ic.up} Upload new invoice</button></div>`}
+    ${invMode()==='existing'?`${d.lockBen?'':`<select class="input" onchange="this.value?pickInv(this.value):null"><option value="">Choose an invoice from ${b.nick}</option>${invs.slice().sort((x,y)=>(x.status==='overdue'?0:1)-(y.status==='overdue'?0:1)).map(i=>`<option value="${i.id}" ${d.invId===i.id?'selected':''}>${i.no} · ${money(left(i),i.cur,0)}${i.paid?' left':''} · due ${i.due}${i.status==='overdue'?' · overdue':''}</option>`).join('')}</select>`}
+      ${d.invId?invLine():''}`
+    :`<div class="upload ${d.invFile?'done':''}" onclick="S.draft.invFile=true;keepScroll=true;render()">${d.invFile?ic.ok+' <span>supplier-invoice.pdf · 182 KB</span>':ic.up+'<div>Upload the invoice</div><div class="small">PDF, JPG or PNG, up to 5 MB</div>'}</div>
+    <div class="field mt16" style="margin-bottom:0"><label class="f">Invoice number</label><input id="invNoIn" class="input" autocomplete="off" value="${d.invNo}" oninput="invNoIn(this.value)" placeholder="As shown on the invoice"><div class="help">We use it as the reference on your supplier's bank statement.</div></div>`}
+    <div id="mm">${partHtml()}</div>
+  </div>`:''}
+  ${b&&b.status==='active'&&invOk()?`<div class="card mt16">
+    <h2><span class="stepn">4</span> Purpose and documents</h2>
+    <div class="grid g2" style="gap:12px"><div class="field" style="margin:0"><label class="f">Purpose</label><select class="input" onchange="S.draft.purpose=this.value;S.draft.sub=0;keepScroll=true;render()">${Object.entries(PURPOSES).map(([k,p])=>`<option value="${k}" ${d.purpose===k?'selected':''}>${p.name}</option>`).join('')}</select></div>
+    <div class="field" style="margin:0"><label class="f">Sub-purpose</label><select class="input" onchange="S.draft.sub=+this.value">${P.subs.map((x,i)=>`<option value="${i}" ${d.sub===i?'selected':''}>${x}</option>`).join('')}</select></div></div><div class="mt16"></div>
     <div class="field"><label class="f">Source of funds</label><select class="input" onchange="S.draft.sof=this.value;keepScroll=true;render()">${['Company funds','Trade finance proceeds','Other'].map(o=>`<option ${d.sof===o?'selected':''}>${o}</option>`).join('')}</select></div>
     ${d.sof==='Other'?`<div class="field"><label class="f">Where do the funds come from?</label><input class="input" autocomplete="off" value="${d.sofOther||''}" oninput="S.draft.sofOther=this.value;payCheck()"></div>`:''}
-    ${reqDocs.map(([nme,req,i])=>`<div class="list-item"><div class="li-ic">${ic.file}</div><div class="li-main"><div class="t">${nme}</div><div class="s">Required for ${P.name.toLowerCase()}</div></div>${d.docs[i]?`<span class="tag t-green">Added</span>`:`<button class="btn btn-sm btn-secondary" onclick="S.draft.docs[${i}]=true;keepScroll=true;render()">Upload</button>`}</div>`).join('')}
+    ${invDocs().length?`<label class="f">Saved with invoice ${d.invNo}</label>${invDocs().map(f=>`<div class="list-item" style="background:var(--green50)"><div class="li-ic">${ic.ok}</div><div class="li-main"><div class="t">${f}</div><div class="s">Attached when the invoice was added</div></div><a href="javascript:void(0)" class="small" onclick="viewDoc('${f}')">View</a></div>`).join('')}<div class="mt16"></div>`:''}
+    <label class="f">Additional documents <span class="muted">(optional, up to 2)</span></label>
+    <div class="help" style="margin-top:0">For ${P.name.toLowerCase()}, for example: ${sugg}. Some countries ask for more documents; if we need anything else, we'll ask you.</div>
+    ${d.other.map((f,i)=>`<div class="list-item"><div class="li-ic">${ic.file}</div><div class="li-main"><div class="t">${f}</div></div><a href="javascript:void(0)" class="small" onclick="S.draft.other.splice(${i},1);keepScroll=true;render()">Remove</a></div>`).join('')}
+    ${d.other.length+invDocs().length<2?`<button class="btn btn-sm btn-secondary mt8" onclick="addOtherDoc()">${ic.up} Add document</button>`:'<div class="small muted mt8">You\'ve added the maximum of 2 additional documents.</div>'}
+    <div class="small muted mt8">Documents you add here are saved with the invoice, so you won't need them again for the rest of it.</div>
   </div>`:''}
   <div class="row mt24" style="justify-content:flex-end"><a class="btn btn-secondary" href="#intl">Cancel</a><button class="btn btn-primary btn-lg" id="nPay" ${payReady()?'':'disabled'} onclick="location.hash='#pay/2'">Review payment</button></div>
   </div>`;
 }
-function pickBen(id){ S.draft.ben=id; S.draft.invId=null; S.draft.invNo=''; S.draft.invAmt=''; S.draft.invFile=false; keepScroll=true; render(); }
-function payCheck(){ const d=S.draft; const c=CORRIDORS[d.cc]; const ia=+d.invAmt||0; const ap=parseFloat(d.recv)||0; const mm=$('#mm'); if(mm) mm.innerHTML=(ap&&ia&&Math.abs(ia-ap)/ia>0.02)?mmHtml(ia,ap,c.cur):''; const n=$('#nPay'); if(n) n.disabled=!payReady(); }
-const mmHtml=(ia,ap,cur)=>`<div class="alert a-warn"><span class="ic">${ic.warn}</span><div>The invoice is for ${nm(ia,cur)}, but your supplier would receive about ${nm(ap,cur)}. Check the amount, or continue if you're paying part of it.</div></div>`;
-function pickCountry(k){ const d=S.draft; if(d.cc!==k){ d.ben=null; d.invId=null; d.invNo=''; d.invAmt=''; d.invFile=false; } d.cc=k; calcDraft(); keepScroll=true; render(); }
-function amtIn(which,v){
-  const d=S.draft; v=v.replace(/[^0-9.]/g,''); d[which]=v; d.last=which; calcDraft();
-  const other = which==='send'? $('#recvIn'):$('#sendIn'); if(other) other.value = which==='send'? d.recv : d.send;
-  $('#totTxt').textContent = money(dTot()); $('#balBox').innerHTML = balLine(); payCheck();
-}
-function pickInv(id){ const i=S.invoices.find(x=>x.id===id); Object.assign(S.draft,{invId:id,invNo:i.no,invAmt:i.amt}); keepScroll=true; render(); }
+const invDocs = () => { const d=S.draft; const i=d.invId&&S.invoices.find(x=>x.id===d.invId); return (i&&i.docs)||[]; };
+function addOtherDoc(){ const d=S.draft; const names=PURPOSES[d.purpose].docs.map(x=>x[0].toLowerCase().replace(/[^a-z]+/g,'-')+'.pdf'); d.other.push(names[d.other.length]||'supporting-document-'+(d.other.length+1)+'.pdf'); keepScroll=true; render(); }
+function newInv(){ Object.assign(S.draft,{invId:null,invNo:'',invAmt:'',invFile:false,other:[]}); keepScroll=true; render(); }
+function pickBen(id){ Object.assign(S.draft,{ben:id,invMode:null,invId:null,invNo:'',invAmt:'',invFile:false,other:[]}); keepScroll=true; render(); }
+const partHtml = () => { const d=S.draft; if(!d.cc||!d.invId) return ''; const ia=parseFloat(d.invAmt)||0; const ra=parseFloat(d.recv)||0; const cur=CORRIDORS[d.cc].cur;
+  if(!ia||!ra||Math.abs(ia-ra)<0.005) return '';
+  const fix=`<a href="javascript:void(0)" onclick="useInvAmt()">Pay ${money(ia,cur)} instead</a>`;
+  return ra<ia?`<div class="alert a-info mt8"><span class="ic">${ic.info}</span><div>You're paying part of this invoice: ${nm(ra,cur)} of ${nm(ia,cur)}. The rest stays open on the invoice. ${fix}</div></div>`
+   :`<div class="alert a-warn mt8"><span class="ic">${ic.warn}</span><div>This is more than the invoice amount of ${nm(ia,cur)}. Check the amount before you continue. ${fix}</div></div>`; };
+function useInvAmt(){ const d=S.draft; d.recv=d.invAmt; d.last='recv'; calcDraft(); keepScroll=true; render(); }
+function payCheck(){ const mm=$('#mm'); if(mm) mm.innerHTML=partHtml(); const n=$('#nPay'); if(n) n.disabled=!payReady(); }
+function invAmtIn(v){ const d=S.draft; v=v.replace(/[^0-9.]/g,''); const was=invOk(); d.invAmt=v; if(!(parseFloat(d.recv)>0)&&parseFloat(v)>0){ d.recv=v; d.last='recv'; calcDraft(); const r=$('#recvIn'); if(r) r.value=d.recv; const sI=$('#sendIn'); if(sI) sI.value=d.send; } if(invOk()!==was){ keepScroll=true; render(); const e=$('#invAmtIn'); if(e){ e.focus(); e.setSelectionRange(e.value.length,e.value.length); } } else { const il=$('#invl'); if(il) il.innerHTML=invOk()?invLine():''; refreshAmt(); } }
+function pickCountry(k){ const d=S.draft; if(d.cc!==k){ Object.assign(d,{ben:null,invId:null,invNo:'',invAmt:'',invFile:false,other:[]}); d.cc=k; if(d.last==='recv'){ d.last='send'; } calcDraft(); } keepScroll=true; render(); }
+function refreshAmt(){ const t=$('#totTxt'); if(t) t.textContent=money(dTot()); const bb=$('#balBox'); if(bb) bb.innerHTML=balLine(); payCheck(); }
+function amtIn(which,v){ const d=S.draft; v=v.replace(/[^0-9.]/g,''); d[which]=v; d.last=which; calcDraft(); const o=which==='send'?$('#recvIn'):$('#sendIn'); if(o) o.value=which==='send'?d.recv:d.send; refreshAmt(); }
+function pickInv(id){ const i=S.invoices.find(x=>x.id===id); const d=S.draft; Object.assign(d,{invId:id,invNo:i.no,invAmt:String(left(i)),invFile:true,other:[]}); if(!(parseFloat(d.recv)>0)){ d.recv=String(left(i)); d.last='recv'; calcDraft(); } keepScroll=true; render(); }
 function quoteBlock(){
   const d=S.draft; const c=CORRIDORS[d.cc]; const amt=dAmt();
   return `<div class="row between"><h3 style="margin:0">Current rate</h3><span class="small muted">Refreshes in <span class="countdown" id="qcd">${mmss(S.quoteSecs)}</span></span></div>
-    <div class="kv mt8"><span class="k">You send</span><span class="v">${nm(amt)}</span></div>
+    <div class="kv mt8"><span class="k">${ben(d.ben).nick} receives</span><span class="v" style="font-size:16px">${nm(parseFloat(d.recv)||0,c.cur)}</span></div>
+    <div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${S.rates[d.cc].toFixed(4)} ${c.cur}</span></div>
+    <div class="kv"><span class="k">You send</span><span class="v">${nm(amt)}</span></div>
     <div class="kv"><span class="k">Fee</span><span class="v">${feeTxt(c.cur,d.disc)}</span></div>
     <div class="kv total"><span class="k">Total from balance</span><span class="v">${nm(dTot())}</span></div>
-    <div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${S.rates[d.cc].toFixed(4)} ${c.cur}</span></div>
-    <div class="kv"><span class="k">They receive about</span><span class="v" style="font-size:16px">${nm(amt*S.rates[d.cc],c.cur)}</span></div>
     <div class="small muted">Your balance: ${nm(S.balance)}</div>`;
 }
 function vReview(){
   const d=S.draft; const c=CORRIDORS[d.cc]; const b=ben(d.ben); const amt=dAmt(); const tot=dTot();
   const inv=d.invId?S.invoices.find(i=>i.id===d.invId):null; const P=PURPOSES[d.purpose];
-  const docs=[(inv?inv.no:d.invNo)+'.pdf',...P.docs.filter((x,i)=>d.docs[i]).map(x=>x[0].toLowerCase().replace(/[^a-z]+/g,'-')+'.pdf')];
+  const docs=[(inv?inv.no:d.invNo)+'.pdf',...invDocs(),...d.other];
   const short=tot>S.balance;
-  if(isAdmin()) after=()=>startQuote('qcd',()=>{ tick(); d.last='send'; calcDraft(); const q=$('#qbox'); if(q){ q.innerHTML=quoteBlock(); q.classList.remove('updated'); void q.offsetWidth; q.classList.add('updated'); } const n=$('#rnote'); if(n) n.style.display='flex'; });
+  if(isAdmin()) after=()=>startQuote('qcd',()=>{ tick(); S.draft.last='recv'; calcDraft(); const q=$('#qbox'); if(q){ q.innerHTML=quoteBlock(); q.classList.remove('updated'); void q.offsetWidth; q.classList.add('updated'); } const n=$('#rnote'); if(n) n.style.display='flex'; });
   return `<div class="grid g-main"><div class="card" style="align-self:start">
     <div class="sec-h"><h3>Payment details</h3><a href="#pay/1" class="small">Edit</a></div>
     <h3 class="mt16" style="font-size:13px;color:var(--g500);text-transform:uppercase;letter-spacing:.5px">Beneficiary</h3>
     ${benFull(b)}
     <hr class="sep"><h3 style="font-size:13px;color:var(--g500);text-transform:uppercase;letter-spacing:.5px">Payment</h3>
-    <div class="kv"><span class="k">Invoice</span><span class="v num">${inv?inv.no+' · '+money(inv.amt,c.cur):d.invNo}</span></div>
-    <div class="kv"><span class="k">Purpose</span><span class="v">${P.name}</span></div>
+    <div class="kv"><span class="k">Invoice</span><span class="v num">${inv?inv.no+' · '+money(inv.amt,c.cur)+(inv.paid?' · '+money(left(inv),c.cur)+' left':''):d.invNo}</span></div>
+    <div class="kv"><span class="k">Purpose</span><span class="v">${P.name} · ${P.subs[d.sub||0]}</span></div>
     <div class="kv"><span class="k">Source of funds</span><span class="v">${d.sof==='Other'?d.sofOther:d.sof}</span></div>
     <div class="kv"><span class="k">Reference for supplier</span><span class="v num">${(inv?inv.no:d.invNo).slice(0,16)}</span></div>
     <div class="mt8">${docs.map(f=>`<span class="doc-chip" onclick="viewDoc('${f.replace(/'/g,'')}')">${ic.file} ${f}</span>`).join('')}</div>
   </div>
   <div style="align-self:start;position:sticky;top:88px" class="grid">
-    <div class="card quote-live">${isAdmin()?`<div id="qbox">${quoteBlock()}</div><div class="alert a-info mt8" id="rnote" style="display:none"><span class="ic">${ic.info}</span><div>The rate just refreshed. Check the amount your supplier receives.</div></div>`:
+    <div class="card quote-live">${isAdmin()?`<div id="qbox">${quoteBlock()}</div><div class="alert a-info mt8" id="rnote" style="display:none"><span class="ic">${ic.info}</span><div>The rate just refreshed. Check the AED total.</div></div>`:
       `<h3 style="margin:0">Amount</h3>
-      <div class="kv mt8"><span class="k">You send</span><span class="v">${nm(amt)}</span></div>
-      <div class="kv"><span class="k">Fee</span><span class="v">${feeTxt(c.cur,d.disc)}</span></div>
-      <div class="kv total"><span class="k">Total from balance</span><span class="v">${nm(tot)}</span></div>
+      <div class="kv mt8"><span class="k">${b.nick} receives</span><span class="v" style="font-size:16px">${nm(parseFloat(d.recv)||0,c.cur)}</span></div>
       <div class="kv"><span class="k">Indicative rate</span><span class="v num">1 AED = ${S.rates[d.cc].toFixed(4)} ${c.cur}</span></div>
-      <div class="kv"><span class="k">They receive about</span><span class="v" style="font-size:16px">${nm(amt*S.rates[d.cc],c.cur)}</span></div>
-      <div class="small muted">The rate is fixed when your Admin approves. The AED amount stays the same.</div>`}
+      <div class="kv"><span class="k">You send about</span><span class="v">${nm(amt)}</span></div>
+      <div class="kv"><span class="k">Fee</span><span class="v">${feeTxt(c.cur,d.disc)}</span></div>
+      <div class="kv total"><span class="k">Total from balance, about</span><span class="v">${nm(tot)}</span></div>
+      <div class="small muted">${b.nick} receives exactly this amount. The AED total is fixed at the rate when your Admin approves.</div>`}
       <hr class="sep">
       ${d.disc?`<div class="row between"><span class="tag t-green">${d.promo} · ${PROMOS[d.promo].label}</span><a href="javascript:void(0)" class="small" onclick="S.draft.promo='';S.draft.disc=0;keepScroll=true;render()">Remove</a></div>`:
-      `<label class="f">Promo code</label><div class="row" style="gap:8px"><input class="input ${d.promoErr?'err':''}" id="promoIn" autocomplete="off" style="text-transform:uppercase" value="${d.promo}" placeholder="Enter code"><button class="btn btn-secondary" style="height:44px" onclick="applyPromo()">Apply</button></div>${d.promoErr?`<div class="help" style="color:var(--red600)">${d.promoErr}</div>`:'<div class="help">Try BIZFREE or WELCOME50 in this prototype.</div>'}`}
+      `<label class="f">Promo code</label><div class="row" style="gap:8px"><input class="input ${d.promoErr?'err':''}" id="promoIn" autocomplete="off" style="text-transform:uppercase" value="${d.promo}" placeholder="Enter code"><button class="btn btn-secondary" style="height:44px" onclick="applyPromo()">Apply</button></div>${d.promoErr?`<div class="help" style="color:var(--red600)">${d.promoErr}</div>`:''}<div class="row mt8" style="gap:6px;flex-wrap:wrap;align-items:center"><span class="small muted">Available offer:</span><button class="cc-btn" style="padding:4px 10px;font-size:12px" onclick="$('#promoIn').value='BIZFREE';applyPromo()">BIZFREE</button><span class="small muted">waives the transfer fee</span></div>`}
       <hr class="sep">
       ${short?`<div class="alert a-err"><span class="ic">${ic.warn}</span><div>Not enough balance for this payment.</div></div>`:''}
-      ${isAdmin()?`<button class="btn btn-primary btn-block btn-lg" ${short?'disabled':''} onclick="adminPayNow()">Pay now</button><p class="small muted mt8">You confirm with your password and OTP. The rate is fixed at that moment.</p>`:
+      ${isAdmin()?`<button class="btn btn-primary btn-block btn-lg" ${short?'disabled':''} onclick="adminPayNow()">Pay now</button><p class="small muted mt8">You confirm with your password and OTP. The rate and AED total are fixed at that moment.</p>`:
       `<button class="btn btn-primary btn-block btn-lg" ${short?'disabled':''} onclick="submitPay()">Submit for Admin approval</button><p class="small muted mt8">Nothing is taken from your balance until your Admin approves.</p>`}
     </div>${short?shortfallOptions(tot-S.balance):''}</div></div>`;
 }
@@ -909,8 +966,10 @@ function startQuote(elId,onRefresh){ let left=S.quoteSecs; timers.push(setInterv
 function viewDoc(f){ openModal(`<div class="modal-h"><h3>${f}</h3><button class="icon-btn" onclick="closeModal()">${ic.x}</button></div><div class="modal-b"><div class="doc" style="min-height:300px"><b>${f}</b><div class="small muted">Document preview</div>${'<div class="line" style="width:'+[90,70,85,60,80,75,90,50].join('%"></div><div class="line" style="width:')+'%"></div>'}</div></div>`,true); }
 function newPayment(status){
   const d=S.draft; const b=ben(d.ben); const c=CORRIDORS[b.cc]; const inv=d.invId?S.invoices.find(i=>i.id===d.invId):null; const P=PURPOSES[d.purpose];
-  const p={id:'IP-'+(S.seq++),ben:d.ben,aed:dAmt(),rate:S.rates[b.cc],status,by:S.persona,at:now(),expires:plusH(24),purpose:d.purpose,inv:inv?inv.no:d.invNo,invAmt:+(inv?inv.amt:d.invAmt),invCur:c.cur,sof:d.sof==='Other'?d.sofOther:d.sof,invId:d.invId,ref:(d.invNo||'').slice(0,16),promo:d.disc?d.promo:'',disc:d.disc||0,
-    docs:[(inv?inv.no:d.invNo)+'.pdf',...P.docs.filter((x,i)=>d.docs[i]).map(x=>x[0].toLowerCase().replace(/[^a-z]+/g,'-')+'.pdf'),...d.other]};
+  const p={id:'IP-'+(S.seq++),ben:d.ben,aed:dAmt(),recvAmt:+(parseFloat(d.recv)||0).toFixed(2),rate:S.rates[b.cc],status,by:S.persona,at:now(),expires:plusH(24),purpose:d.purpose,inv:inv?inv.no:d.invNo,invAmt:inv?+inv.amt:0,invCur:c.cur,sof:d.sof==='Other'?d.sofOther:d.sof,invId:d.invId,ref:(d.invNo||'').slice(0,16),promo:d.disc?d.promo:'',disc:d.disc||0,
+    sub:P.subs[d.sub||0], docs:[(inv?inv.no:d.invNo)+'.pdf',...invDocs(),...d.other]};
+  if(inv){ inv.docs=[...(inv.docs||[]),...d.other]; }
+  else { const ni={id:'I'+(S.invoices.length+1)+'x',ben:d.ben,no:d.invNo,cur:c.cur,amt:p.recvAmt,due:'Not set',status:'unpaid',src:'Uploaded with a payment by '+USERS[S.persona].name,docs:[...d.other]}; S.invoices.push(ni); p.invId=ni.id; }
   S.payments.push(p); S.draft=null; return p;
 }
 function submitPay(){ const p=newPayment('awaiting'); notify('admin','Payment waiting for your approval',`${USERS[p.by].name} submitted ${money(total(p))} to ${ben(p.ben).nick}. Expires ${p.expires}.`,'approve:'+p.id); location.hash='#pay-done/'+p.id; }
@@ -923,9 +982,9 @@ function vPayDone(id){
   <div class="row mt24" style="justify-content:center"><a class="btn btn-secondary" href="#txn/${p.id}">Track this payment</a><a class="btn btn-primary" href="#intl">Done</a></div></div>`;
 }
 function executePay(p,rate){
-  const b=ben(p.ben); if(rate) p.rate=rate; p.status='processing'; p.approvedBy='admin'; p.approvedAt=now();
+  const b=ben(p.ben); if(rate){ p.rate=rate; if(p.recvAmt) p.aed=+(p.recvAmt/rate).toFixed(2); } p.status='processing'; p.approvedBy='admin'; p.approvedAt=now();
   S.balance-=total(p);
-  if(p.invId){ const i=S.invoices.find(x=>x.id===p.invId); if(i) i.status='paid'; }
+  if(p.invId){ const i=S.invoices.find(x=>x.id===p.invId); if(i){ i.paid=+((i.paid||0)+recv(p)).toFixed(2); i.status=left(i)<=0.005?'paid':'part'; } }
   if(p.by==='maker') notify('maker','Payment approved',`Your payment ${p.id} to ${b.nick} was approved and is being processed.`,'#txn/'+p.id);
   setTimeout(()=>{ p.status='sent'; p.sentAt=now(); if(location.hash==='#txn/'+p.id){ keepScroll=true; render(); } },2500);
   setTimeout(()=>{ p.status='completed'; p.done=now(); p.payRef='B2B-'+Math.random().toString(36).slice(2,6).toUpperCase()+'-'+p.id.slice(3); notify(p.by,'Payment completed',`${p.id} to ${b.nick} was paid. Your payment advice is ready.`,'#txn/'+p.id); if(location.hash==='#txn/'+p.id){ keepScroll=true; render(); } },5500);
@@ -967,11 +1026,11 @@ function renderDrawer(){
   const canAct = item.status==='pending' && isAdmin() && item.by!=='admin';
   let body='';
   if(item.kind==='pay'){
-    const p=pay(id); const b=ben(p.ben); const c=CORRIDORS[b.cc]; const fee=feeFor(c.cur); const tot=total(p);
-    const r = item.status==='pending'? S.rates[b.cc] : p.rate;
+    const p=pay(id); const b=ben(p.ben); const c=CORRIDORS[b.cc]; const fee=feeFor(c.cur);
+    const r = item.status==='pending'? S.rates[b.cc] : p.rate; const tot=totalAt(p,r);
     const flags=[];
     if(item.status==='pending'){
-      const ap=p.aed*r; if(p.invAmt&&Math.abs(p.invAmt-ap)/p.invAmt>0.02) flags.push(['a-warn',`Invoice ${p.inv} is for ${money(p.invAmt,p.invCur)}. At the current rate the supplier receives ${money(ap,c.cur)}.`]);
+      const ap=recv(p); if(p.invAmt&&ap<p.invAmt-0.005) flags.push(['a-info',`Part payment: ${money(ap,c.cur)} of invoice ${p.inv} (${money(p.invAmt,p.invCur)}).`]); else if(p.invAmt&&ap>p.invAmt+0.005) flags.push(['a-warn',`More than the invoice: ${money(ap,c.cur)} against invoice ${p.inv} for ${money(p.invAmt,p.invCur)}.`]);
       if(!S.payments.some(x=>x.ben===p.ben&&x.status==='completed')) flags.push(['a-err',`<b>New beneficiary.</b> First payment to ${b.nick}, added by ${USERS[b.addedBy||'maker'].name}${b.addedAt?' on '+b.addedAt:''}. Confirm their bank details with the supplier before you authorize.`]);
       if(b.cpv&&b.cpv.status==='nomatch') flags.push(['a-err',`<b>Name doesn't match.</b> The receiving bank has this account under "${b.cpv.name}", not "${b.name}".`]);
       if(b.cpv&&b.cpv.status==='close') flags.push(['a-warn',`<b>Close name match.</b> The receiving bank has this account under "${b.cpv.name}". Check it's the same company.`]);
@@ -985,7 +1044,7 @@ function renderDrawer(){
       <div class="card mb16"><h3>Beneficiary</h3>${benFull(b)}</div>
       <div class="card mb16"><div class="row between"><h3 style="margin:0">Invoice ${p.inv}</h3><span class="num">${p.invAmt?money(p.invAmt,p.invCur):''}</span></div>
         <div class="doc mt8"><div class="row between"><b>${b.name}</b><span class="num">${p.inv}</span></div><div class="small muted">Commercial invoice · Bill to: Al Noor Trading LLC, Dubai</div><div class="line" style="width:90%"></div><div class="line" style="width:70%"></div>${p.invAmt?`<div class="row between mt8"><span>Total due</span><b class="num">${money(p.invAmt,p.invCur)}</b></div>`:''}</div>
-        <div class="kv mt8"><span class="k">Purpose</span><span class="v">${PURPOSES[p.purpose].name}</span></div><div class="kv"><span class="k">Source of funds</span><span class="v">${p.sof}</span></div><div class="kv"><span class="k">Reference</span><span class="v">${p.ref||'None'}</span></div>
+        <div class="kv mt8"><span class="k">Purpose</span><span class="v">${PURPOSES[p.purpose].name}${p.sub?' · '+p.sub:''}</span></div><div class="kv"><span class="k">Source of funds</span><span class="v">${p.sof}</span></div><div class="kv"><span class="k">Reference</span><span class="v">${p.ref||'None'}</span></div>
         <div class="mt8">${(p.docs||[]).map(f=>`<span class="doc-chip" onclick="viewDoc('${f}')">${ic.file} ${f}</span>`).join('')}</div></div>`;
   } else if(item.kind==='ben'){
     const b=ben(item.ref); const c=CORRIDORS[b.cc];
@@ -1009,14 +1068,14 @@ function renderDrawer(){
   if(item.kind==='pay'&&item.status==='pending'){ window._dq=setInterval(()=>{ S.dqLeft--; if(S.dqLeft<=0){ tick(); S.dqLeft=S.quoteSecs; const q=$('#dq'); if(q){ q.innerHTML=dQuote(pay(id),S.rates[ben(pay(id).ben).cc],true); q.classList.remove('updated'); void q.offsetWidth; q.classList.add('updated'); } } const el=$('#dqcd'); if(el) el.textContent=mmss(S.dqLeft); },1000); }
 }
 function dQuote(p,r,refreshed){
-  const b=ben(p.ben); const c=CORRIDORS[b.cc]; const fee=feeFor(c.cur); const tot=total(p); const pend=p.status==='awaiting';
+  const b=ben(p.ben); const c=CORRIDORS[b.cc]; const fee=feeFor(c.cur); const tot=totalAt(p,r); const pend=p.status==='awaiting'; const sendA=aedAt(p,r);
   return `<div class="row between"><h3 style="margin:0">${pend?'Current rate':'Payment'}</h3>${pend?`<span class="small muted">Refreshes in <span class="countdown" id="dqcd">${mmss(S.dqLeft??S.quoteSecs)}</span></span>`:''}</div>
     ${refreshed?`<div class="alert a-info mt8"><span class="ic">${ic.info}</span><div>The rate just refreshed. Check the amount before you authorize.</div></div>`:''}
-    <div class="kv mt8"><span class="k">You send</span><span class="v">${nm(p.aed)}</span></div>
+    <div class="kv mt8"><span class="k">${b.nick} receives</span><span class="v" style="font-size:16px">${nm(p.recvAmt||p.aed*r,c.cur)}</span></div>
+    <div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${r.toFixed(4)} ${c.cur}</span></div>
+    <div class="kv"><span class="k">You send</span><span class="v">${nm(sendA)}</span></div>
     <div class="kv"><span class="k">Fee</span><span class="v">${feeTxt(c.cur,p.disc||0)}</span></div>
     <div class="kv total"><span class="k">Total from balance</span><span class="v">${nm(tot)}</span></div>
-    <div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${r.toFixed(4)} ${c.cur}</span></div>
-    <div class="kv"><span class="k">${b.nick} receives</span><span class="v" style="font-size:16px">${nm(p.aed*r,c.cur)}</span></div>
     ${pend?`<hr class="sep"><div class="kv"><span class="k">Current wallet balance</span><span class="v">${nm(S.balance)}</span></div><div class="kv"><span class="k">Balance after this payment</span><span class="v" style="${S.balance-tot<0?'color:var(--red600)':''}">${nm(S.balance-tot)}</span></div>
     ${tot>S.balance?`<div class="alert a-err mt8"><span class="ic">${ic.warn}</span><div>Not enough balance. <a href="javascript:topUp()">Add money</a> before you authorize.</div></div>`:''}`:''}`;
 }
@@ -1030,7 +1089,7 @@ function submitDecision(id){
     else { const o=S.otherApprovals.find(x=>x.id===id); o.status='rejected'; o.checker='admin'; o.checkAt=now(); }
     S.dRemark=''; closeDrawer(); render(); toast('Rejected'); return;
   }
-  if(item.kind==='pay'){ const p=pay(id); if(total(p)>S.balance){ toast('Not enough balance'); return; } }
+  if(item.kind==='pay'){ const p=pay(id); if(totalAt(p,S.rates[ben(p.ben).cc])>S.balance){ toast('Not enough balance'); return; } }
   otpFlow('Authorize request',()=>{
     if(item.kind==='pay'){ const p=pay(id); executePay(p,S.rates[ben(p.ben).cc]); }
     else if(item.kind==='ben'){ const b=ben(item.ref); b.approvedAt=now(); activateBen(b); notify(b.addedBy,'Beneficiary approved',b.status==='active'?`${b.nick} is ready to pay.`:`${b.nick} is approved. You can pay them from ${b.availFrom}.`,'#ben/'+b.id); }
