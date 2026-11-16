@@ -930,6 +930,14 @@ function invSection(b,invs){
     :`<div class="small muted mb8">No open invoices from ${b.nick} yet. Add the invoice you're paying.</div>`}
     ${d.invNew?form:`<button class="btn btn-secondary btn-block mt8" style="border-style:dashed" onclick="openNewInv()">+ Add new invoice</button>`}`;
 }
+const payWithCard = () => `<div class="card mt16" id="payWith">
+    <h2><span class="stepn">2</span> Pay with</h2>
+    <div class="inv-list">
+      <div class="inv-row sel pm-row"><span class="rb"></span><div class="li-ic">${ic.wallet}</div><div class="li-main"><div class="t">botim business wallet</div><div class="s">Balance ${money(S.balance)} · debited when your Admin approves</div></div></div>
+      <div class="inv-row off pm-row" aria-disabled="true"><span class="rb"></span><div class="li-ic">${ic.clock}</div><div class="li-main"><div class="t">Send now, pay later</div><div class="s">Pay your supplier today and repay later with a botim business loan</div></div><span class="tag t-gray">Coming soon</span></div>
+      <div class="inv-row off pm-row" aria-disabled="true"><span class="rb"></span><div class="li-ic">${ic.card}</div><div class="li-main"><div class="t">Debit or credit card</div><div class="s">Pay with your business debit or credit card</div></div><span class="tag t-gray">Coming soon</span></div>
+    </div>
+  </div>`;
 const amtSummary = c => { const d=S.draft;
   return `<div class="card"><div class="row between"><h2 style="margin:0"><span class="stepn">1</span> Amount</h2><a href="javascript:void(0)" class="small" id="amtChange" onclick="S.draft.amtSum=false;keepScroll=true;render()">Change</a></div>
     <div class="amt-sum mt16"><div><div class="lbl">${d.ben?ben(d.ben).nick:'Supplier'} receives</div><div class="big num">${money(parseFloat(d.recv)||0,c.cur)}</div><div class="small muted">${c.flag} ${c.name}</div></div>
@@ -959,8 +967,9 @@ function vPay(step){
     ${S.pausedCorridor?`<div class="alert a-warn mt8"><span class="ic">${ic.warn}</span><div>Payments to ${CORRIDORS[S.pausedCorridor].name} are paused for now. We'll show it again as soon as it's back.</div></div>`:''}
     <div id="balBox">${balLine()}</div>
   </div>`}
+  ${payWithCard()}
   <div class="card mt16">
-    <div class="row between mb16"><h2 style="margin:0"><span class="stepn">2</span> ${d.lockBen?'Paying':'Beneficiary'}</h2>${d.lockBen?'':`<a href="#beneficiaries" class="small">View all</a>`}</div>
+    <div class="row between mb16"><h2 style="margin:0"><span class="stepn">3</span> ${d.lockBen?'Paying':'Beneficiary'}</h2>${d.lockBen?'':`<a href="#beneficiaries" class="small">View all</a>`}</div>
     <div class="grid g3">
       ${d.lockBen?'':`<button class="choice" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--blue-600)" onclick="startBen('${d.cc}',true)"><span style="font-size:22px">+</span><span class="t">New beneficiary</span><span class="s">in ${c.name}</span></button>`}
       ${list.map(x=>{const off=x.status!=='active';return `<button class="choice ${d.ben===x.id?'sel':''} ${off?'disabled':''}" ${off||d.lockBen?'':`onclick="pickBen('${x.id}')"`}><div class="row between"><span class="tag t-gray" style="padding:2px 8px">${c.flag} ${c.cur}</span>${off?btag(x):''}</div><div class="t mt8" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.nick}</div><div class="s">${x.bank} ${x.acct}</div><div class="s">${etaOf(x)}</div></button>`}).join('')}
@@ -968,11 +977,11 @@ function vPay(step){
     ${!list.length?`<p class="small muted mt8">No saved beneficiaries in ${c.name} yet.</p>`:''}
   </div>
   ${b&&b.status==='active'?`<div class="card mt16">
-    <h2><span class="stepn">3</span> Invoice</h2>
+    <h2><span class="stepn">4</span> Invoice</h2>
     ${invSection(b,invs)}
   </div>`:''}
   ${b&&b.status==='active'&&invOk()?`<div class="card mt16">
-    <h2><span class="stepn">4</span> Purpose and documents</h2>
+    <h2><span class="stepn">5</span> Purpose and documents</h2>
     <div class="field"><label class="f">Purpose</label><select class="input" onchange="S.draft.purpose=this.value;keepScroll=true;render()">${Object.entries(PURPOSES).map(([k,p])=>`<option value="${k}" ${d.purpose===k?'selected':''}>${p.name}</option>`).join('')}</select></div>
 
     <div class="field"><label class="f">Source of funds</label><select class="input" onchange="S.draft.sof=this.value;keepScroll=true;render()">${['Company funds','Trade finance proceeds','Other'].map(o=>`<option ${d.sof===o?'selected':''}>${o}</option>`).join('')}</select></div>
@@ -984,14 +993,7 @@ function vPay(step){
     ${d.other.length+invDocs().length<2?`<button class="btn btn-sm btn-secondary mt8" onclick="addOtherDoc()">${ic.up} Add document</button>`:'<div class="small muted mt8">You\'ve added the maximum of 2 additional documents.</div>'}
     <div class="small muted mt8">Documents you add here are saved with the invoice, so you won't need them again for the rest of it.</div>
   </div>
-  <div class="card mt16" id="payWith">
-    <h2><span class="stepn">5</span> Pay with</h2>
-    <div class="inv-list">
-      <div class="inv-row sel pm-row"><span class="rb"></span><div class="li-ic">${ic.wallet}</div><div class="li-main"><div class="t">botim business wallet</div><div class="s">Balance ${money(S.balance)} · debited when your Admin approves</div></div></div>
-      <div class="inv-row off pm-row" aria-disabled="true"><span class="rb"></span><div class="li-ic">${ic.clock}</div><div class="li-main"><div class="t">Send now, pay later</div><div class="s">Pay your supplier today and repay later with a botim business loan</div></div><span class="tag t-gray">Coming soon</span></div>
-      <div class="inv-row off pm-row" aria-disabled="true"><span class="rb"></span><div class="li-ic">${ic.card}</div><div class="li-main"><div class="t">Debit or credit card</div><div class="s">Pay with your business debit or credit card</div></div><span class="tag t-gray">Coming soon</span></div>
-    </div>
-  </div>`:''}
+`:''}
   <div class="row mt24" style="justify-content:flex-end"><a class="btn btn-secondary" href="#intl">Cancel</a><button class="btn btn-primary btn-lg" id="nPay" ${payReady()?'':'disabled'} onclick="location.hash='#pay/2'">Review payment</button></div>
   </div>`;
 }
