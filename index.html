@@ -509,7 +509,7 @@ label.f{font-size:12px;font-weight:500;color:var(--g800);margin-bottom:6px}
 .np-step.cur .ix{background:var(--blue-600);color:#fff}
 .np-sum{border-top:1px solid var(--line);padding-top:12px}
 .np-sum .kv{padding:6px 0;font-size:13px}
-@media (min-width:1101px){.np-bottom{display:none!important}}
+
 @media (max-width:1100px){.np-grid{grid-template-columns:1fr}.np-rail{display:none}}
 @media (max-width:860px){
   .side{position:fixed;left:0;top:0;z-index:30;height:100vh;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--shadow-modal)}
@@ -1102,11 +1102,10 @@ const invLine = () => { const d=S.draft; const c=CORRIDORS[d.cc]; const i=d.invI
   return `<div class="alert a-info" style="align-items:center"><span class="ic">${ic.file}</span><div style="flex:1"><b>Paying invoice <span class="num">${d.invNo}</span></b><div class="small">Due ${i.due}${i.status==='overdue'?' · <span style="color:var(--red600)">Overdue</span>':''}</div></div><button class="btn btn-sm btn-secondary" onclick="viewDoc('${i.no.replace(/'/g,'')}.pdf')">View invoice</button></div>`; };
 const normNo = v => String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
 const invMatch = () => { const d=S.draft; const i=d.invId&&S.invoices.find(x=>x.id===d.invId); return i && normNo(d.invTyped)!=='' && normNo(d.invTyped)===normNo(i.no); };
-const invOk = () => { const d=S.draft; return d.invId ? invMatch() : (d.invNew && d.invFile && d.invNo.trim()); };
-const invChkHtml = () => { const d=S.draft; const i=S.invoices.find(x=>x.id===d.invId); const t=normNo(d.invTyped); const bad=t && !normNo(i.no).startsWith(t);
-  return `<div class="field mt16" style="margin-bottom:0"><label class="f">Invoice number</label><input id="invChk" class="input ${bad?'err':''}" autocomplete="off" value="${d.invTyped||''}" oninput="invChkIn(this.value)" placeholder="Type the number shown on the invoice">
-    <div class="help" id="invChkHelp" style="${bad?'color:var(--red600)':''}">${bad?`This doesn't match invoice ${i.no}. Check the number on the invoice.`:invMatch()?`<span style="color:var(--green600)">Matches invoice ${i.no}.</span>`:'We use it as the reference on your supplier\'s bank statement.'}</div></div>`; };
-function invChkIn(v){ const was=invOk(); S.draft.invTyped=v; if(invOk()!==was){ keepScroll=true; render(); const e=$('#invChk'); if(e){ e.focus({preventScroll:true}); e.setSelectionRange(e.value.length,e.value.length); } } else { const w=$('#invChkWrap'); if(w){ w.innerHTML=invChkHtml(); const e=$('#invChk'); e.focus({preventScroll:true}); e.setSelectionRange(e.value.length,e.value.length); } payCheck(); } }
+const invOk = () => { const d=S.draft; return d.invId ? !!String(d.invNo||'').trim() : (d.invNew && d.invFile && d.invNo.trim()); };
+const invChkHtml = () => { const d=S.draft;
+  return `<div class="field mt16" style="margin-bottom:0"><label class="f">Invoice number</label><input id="invChk" class="input" autocomplete="off" value="${d.invNo||''}" oninput="invChkIn(this.value)" placeholder="As shown on the invoice"><div class="help">We use it as the reference on your supplier's bank statement.</div></div>`; };
+function invChkIn(v){ S.draft.invNo=v; payCheck(); }
 const payReady = () => { const d=S.draft; const b=d.ben&&ben(d.ben); return b && b.status==='active' && invOk() && parseFloat(d.recv)>0 && dTot()<=S.balance && (d.sof!=='Other'||d.sofOther); };
 const rateLine = cc => { const c=CORRIDORS[cc]; return `1 AED = <span class="num">${S.rates[cc].toFixed(4)}</span> ${c.cur} · fee ${money(feeFor(c.cur))} + VAT`; };
 const invRow = (i,d) => `<div class="inv-row ${d.invId===i.id?'sel':''}" onclick="pickInv('${i.id}')"><span class="rb"></span><div class="li-main"><div class="t num">${i.no}</div><div class="s">Due ${i.due}${i.status==='overdue'?' · <span style="color:var(--red600);font-weight:600">Overdue</span>':''} · ${i.src}</div></div><button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();viewDoc('${i.no.replace(/'/g,'')}.pdf')">View</button></div>`;
@@ -1207,7 +1206,7 @@ function npRail(){
   let cur=st.findIndex(x=>!x[1]); if(cur<0) cur=st.length;
   return `<div class="card"><h3 style="margin-bottom:4px">Your payment</h3><div class="np-steps">${st.map(([t,ok],i)=>`<div class="np-step ${ok?'done':i===cur?'cur':''}"><span class="ix">${ok?'✓':i+1}</span>${t}</div>`).join('')}</div>
     <div class="np-sum"><div class="kv"><span class="k">${b?b.nick:'Supplier'} receives</span><span class="v num">${money(parseFloat(d.recv)||0,c.cur)}</span></div><div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${S.rates[d.cc].toFixed(4)}</span></div><div class="kv total"><span class="k">Total</span><span class="v">${money(dTot())}</span></div><div class="small muted">Indicative. Fixed when your Admin approves.</div></div>
-    <button class="btn btn-primary btn-block mt16" ${payReady()?'':'disabled'} onclick="location.hash='#pay/2'">Review payment</button><a class="btn btn-ghost btn-block mt8" href="#intl">Cancel</a></div>`;
+</div>`;
 }
 
 function pickCountry(k){ const d=S.draft; if(d.cc!==k){ Object.assign(d,{ben:null,invId:null,invNo:'',invNew:false,invFile:false,other:[]}); d.cc=k; if(d.last==='recv'){ d.last='send'; } calcDraft(); } keepScroll=true; render(); }
