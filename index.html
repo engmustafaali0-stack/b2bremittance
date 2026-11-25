@@ -606,7 +606,7 @@ const mmss = s => `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
 /* ================= state ================= */
 function seed(){
   return {
-    persona:'admin', balance:48250.00, disabled:false, introSeen:false, pausedCorridor:null, quoteSecs:300,
+    persona:'maker', balance:48250.00, disabled:false, introSeen:false, pausedCorridor:null, quoteSecs:300,
     rates:Object.fromEntries(Object.entries(CORRIDORS).map(([k,c])=>[k,c.rate])),
     beneficiaries:[
       {id:'B1',name:'Shenzhen Hengtai Electronics Co., Ltd',nick:'Hengtai',cc:'CN',method:'bank',acct:'•••• 5678',bank:'Bank of China',status:'active',email:'accounts@hengtai.example',known:true,changed:{at:'28 Oct, 16:05',by:'maker',old:{'Bank name':'Industrial and Commercial Bank of China','Account number':'6222 0200 0911 9021','SWIFT code':'ICBKCNBJSZN'}},fields:'CN_bank',cpv:{status:'match',name:'SHENZHEN HENGTAI ELECTRONICS CO LTD'}},
