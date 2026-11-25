@@ -1187,13 +1187,35 @@ function submitDecision(id){
     else { const o=S.otherApprovals.find(x=>x.id===id); o.status='rejected'; o.checker='admin'; o.checkAt=now(); }
     S.dRemark=''; closeDrawer(); render(); toast('Rejected'); return;
   }
-  if(item.kind==='pay'){ const p=pay(id); if(totalAt(p,S.rates[ben(p.ben).cc])>S.balance){ toast('Not enough balance'); return; } }
+  if(item.kind==='pay'){ confirmFinal(id); return; }
   otpFlow('Authorize request',()=>{
-    if(item.kind==='pay'){ const p=pay(id); if(S.forceRateMove){ S.forceRateMove=false; tick(); S.dqLeft=S.quoteSecs; S.dRateMoved=true; S.dDecision=null; renderDrawer(); toast('The rate changed. Check the new total and authorize again.'); return; } executePay(p,S.rates[ben(p.ben).cc]); }
+    if(item.kind==='pay'){ const p=pay(id); executePay(p,S.rates[ben(p.ben).cc]); }
     else if(item.kind==='ben'){ const b=ben(item.ref); b.approvedAt=now(); activateBen(b); notify(b.addedBy,'Beneficiary approved',b.status==='active'?`${b.nick} is ready to pay.`:`${b.nick} is approved. You can pay them from ${b.availFrom}.`,'#ben/'+b.id); }
     else { const o=S.otherApprovals.find(x=>x.id===id); o.status='approved'; o.checker='admin'; o.checkAt=now(); }
     S.dRemark=''; closeDrawer(); render(); toast('Authorized');
   });
+}
+function confirmFinal(id){
+  const p=pay(id); const b=ben(p.ben); const c=CORRIDORS[b.cc]; const shown=S.rates[b.cc];
+  // final quote (A2) fetched one last time when the Admin clicks Authorize
+  let r=shown; if(S.forceRateMove){ S.forceRateMove=false; r=+(shown*0.996).toFixed(4); S.rates[b.cc]=r; S.dRateMoved=true; const q=$('#dq'); if(q) q.innerHTML=dQuote(p,r,true); }
+  const moved=r!==shown; const tot=totalAt(p,r); const short=tot>S.balance;
+  openModal(`<div class="modal-h"><h3>Confirm the final amount</h3><button class="icon-btn" onclick="closeModal()">${ic.x}</button></div>
+  <div class="modal-b">
+    <p class="muted" style="margin-top:0">We just fetched the final rate. This is what will be taken from your balance and what ${b.nick} will receive.</p>
+    ${moved?`<div class="alert a-warn mb16"><span class="ic">${ic.warn}</span><div><b>The rate changed</b> since the amount on screen. The total below is the final one.</div></div>`:''}
+    <div class="card" style="box-shadow:none">
+      <div class="kv"><span class="k">${b.nick} receives</span><span class="v" style="font-size:16px">${nm(p.recvAmt||p.aed*r,c.cur)}</span></div>
+      <div class="kv"><span class="k">Final rate</span><span class="v num">1 AED = ${r.toFixed(4)} ${c.cur}</span></div>
+      <div class="kv"><span class="k">You send</span><span class="v">${nm(aedAt(p,r))}</span></div>
+      <div class="kv"><span class="k">Fee</span><span class="v">${feeTxt(c.cur,p.disc||0)}</span></div>
+      <div class="kv total"><span class="k">Total from balance</span><span class="v">${nm(tot)}</span></div>
+      <div class="kv"><span class="k">Balance after this payment</span><span class="v" style="${short?'color:var(--red600)':''}">${nm(S.balance-tot)}</span></div>
+    </div>
+    ${short?`<div class="alert a-err mt8"><span class="ic">${ic.warn}</span><div>Not enough balance. <a href="javascript:closeModal();topUp()">Add money</a> before you authorize.</div></div>`:''}
+  </div>
+  <div class="modal-f"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" ${short?'disabled':''} id="finalOk">Continue</button></div>`);
+  const ok=$('#finalOk'); if(ok) ok.onclick=()=>{ closeModal(); otpFlow('Authorize request',()=>{ executePay(p,r); S.dRemark=''; closeDrawer(); render(); toast('Authorized'); }); };
 }
 function withdrawReq(id){ const p=pay(id); if(!['checking','pending_info','review','awaiting'].includes(p.status)) return; p.status='withdrawn'; p.failAt=now(); closeDrawer(); location.hash='#txn/'+id; render(); toast('Request withdrawn'); }
 function otpFlow(title,done){
@@ -1359,7 +1381,7 @@ const SCEN=[
   ['Under review','Additional details were sent and are being reviewed. The payment hasn\'t reached the Admin yet.',()=>{location.hash='#txn/IP-10237';},'Open'],
   ['Failed and refunded','The payout failed after the debit; refunded in full.',()=>{location.hash='#txn/IP-10239';},'Open'],
   ['Returned by the bank and refunded','The supplier\'s bank sent it back after completion.',()=>{location.hash='#txn/IP-10233';},'Open'],
-  ['Rate changes at Authorize','The rate moves between the last refresh and the Authorize click. Omar sees the new total and authorizes again.',()=>{S.persona='admin';S.forceRateMove=true;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Try it'],
+  ['Rate changes at Authorize','When Omar clicks Authorize, the final rate is fetched once more. A confirmation shows the final AED total and what Hengtai receives, here with a changed rate, before password and OTP.',()=>{S.persona='admin';S.forceRateMove=true;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Try it'],
   ['Corridor temporarily unavailable','Payments to Türkiye are paused and can\'t be selected.',()=>{S.pausedCorridor='TR';S.introSeen=true;location.hash='#intl';},'Try it'],
   ['Beneficiary needs more information','After review, the maker has 72 hours to upload a document before the beneficiary can be paid.',()=>{S.persona='maker';S.forceBenInfo=true;location.hash='#beneficiaries';setTimeout(()=>startBen(),50);},'Try it'],
   ['Beneficiary can\'t be added','Screening doesn\'t clear. The business only sees that it couldn\'t be added, with no reason.',()=>{S.persona='maker';S.forceBenFail=true;location.hash='#beneficiaries';setTimeout(()=>startBen(),50);},'Try it'],
