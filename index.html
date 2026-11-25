@@ -559,6 +559,8 @@ tr.click:hover td,tbody tr:hover td{background:#FBFAF8}
 .sinfo:hover,.sinfo:focus{color:var(--blue-600);background:var(--blue-50);outline:none}
 .tl-t .sinfo{margin-left:6px;vertical-align:-3px}
 .tip{position:fixed;z-index:80;display:none;max-width:280px;background:var(--navy,#05153B);color:#fff;font-size:12px;line-height:1.45;padding:10px 12px;border-radius:8px;box-shadow:0 8px 24px rgba(5,21,59,.25);pointer-events:none}
+.pay-again{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.pay-again .cc-btn{font-weight:500;font-size:13px;padding:6px 12px}
 </style>
 </head>
 <body>
@@ -614,12 +616,12 @@ const LI=(p=>Object.fromEntries(Object.entries(p).map(([k,v])=>[k,`<svg width="2
 });
 /* ================= reference data (sample) ================= */
 const CORRIDORS = {
-  CN:{name:'China',flag:'🇨🇳',cur:'CNY',rate:1.9412,methods:[{id:'bank',name:'Bank account',eta:'Same day to 1 business day',cpv:true},{id:'wallet',name:'Alipay business account',eta:'Within minutes',cpv:true}]},
-  IN:{name:'India',flag:'🇮🇳',cur:'INR',rate:22.714,methods:[{id:'bank',name:'Bank account',eta:'Within 1 business day',cpv:true}]},
+  CN:{name:'China',flag:'🇨🇳',cur:'CNY',rate:1.9412,methods:[{id:'bank',name:'Bank account',eta:'Same day',cpv:true},{id:'wallet',name:'Alipay business account',eta:'Same day',cpv:true}]},
+  IN:{name:'India',flag:'🇮🇳',cur:'INR',rate:22.714,methods:[{id:'bank',name:'Bank account',eta:'Same day',cpv:true}]},
   HK:{name:'Hong Kong',flag:'🇭🇰',cur:'HKD',rate:2.1187,methods:[{id:'bank',name:'Bank account',eta:'Same day'}]},
-  TR:{name:'Türkiye',flag:'🇹🇷',cur:'TRY',rate:9.384,methods:[{id:'bank',name:'Bank account',eta:'1 to 2 business days',cpv:true}]},
-  DE:{name:'Germany',flag:'🇩🇪',cur:'EUR',rate:0.2341,methods:[{id:'bank',name:'Bank account (SEPA)',eta:'1 business day',cpv:true}]},
-  US:{name:'United States',flag:'🇺🇸',cur:'USD',rate:0.2723,methods:[{id:'bank',name:'Bank account (wire)',eta:'2 to 3 business days'}]}
+  TR:{name:'Türkiye',flag:'🇹🇷',cur:'TRY',rate:9.384,methods:[{id:'bank',name:'Bank account',eta:'Same day',cpv:true}]},
+  DE:{name:'Germany',flag:'🇩🇪',cur:'EUR',rate:0.2341,methods:[{id:'bank',name:'Bank account (SEPA)',eta:'Same day',cpv:true}]},
+  US:{name:'United States',flag:'🇺🇸',cur:'USD',rate:0.2723,methods:[{id:'bank',name:'Bank account (wire)',eta:'Same day'}]}
 };
 const FIELDS = {
   CN_bank:[['Registered company name','Shenzhen Hengtai Electronics Co., Ltd'],['Bank name','Bank of China'],['Account number','6217 0000 1234 5678'],['SWIFT code','BKCHCNBJ45A'],['Company address','88 Keji Road, Nanshan'],['City','Shenzhen']],
@@ -722,14 +724,14 @@ const recv = p => p.recvAmt ? p.recvAmt : p.aed * p.rate;
 const aedAt = (p,r) => p.recvAmt ? +(p.recvAmt/r).toFixed(2) : p.aed;
 const totalAt = (p,r) => aedAt(p,r) + feeDue(CORRIDORS[ben(p.ben).cc].cur,p.disc||0);
 const methodOf = b => CORRIDORS[b.cc].methods.find(m=>m.id===b.method);
-const etaOf = b => methodOf(b).eta;
+const etaOf = b => methodOf(b).eta+sinfo('Same day');
 const benFields = b => b.vals ? FIELDS[b.cc+'_'+b.method].map(([l],i)=>[l,b.vals[i]]) : (b.fields?FIELDS[b.fields].map(([l,ex])=>[l,ex]):[['Registered company name',b.name]]);
 const cpvHtml = b => { const v=b.cpv; if(!v) return ''; const map={match:['t-green','Name matches'],close:['t-yellow','Close match'],nomatch:['t-red','Name doesn\'t match'],na:['t-gray','Not available for this bank']};
   return `<div class="kv"><span class="k">Name at the bank</span><span class="v">${v.name?`<span class="num">${v.name}</span><br>`:''}<span class="tag ${map[v.status][0]}">${map[v.status][1]}</span></span></div>`; };
 function benFull(b,plain){ const c=CORRIDORS[b.cc]; const ch=(b.changed&&!plain)?b.changed.old:{};
   return `<div class="kv"><span class="k">Country and method</span><span class="v">${c.flag} ${c.name} · ${methodOf(b).name}</span></div>`+
    benFields(b).map(([l,v])=>`<div class="kv" ${ch[l]?'style="background:var(--yellow50);border-radius:6px;padding-left:6px;padding-right:6px"':''}><span class="k">${l}${ch[l]?' <span class="tag t-yellow" style="padding:1px 6px">Changed</span>':''}</span><span class="v num">${v}</span></div>`).join('')+cpvHtml(b)+
-   `<div class="kv"><span class="k">Estimated delivery</span><span class="v">${etaOf(b)}</span></div>`+
+   `<div class="kv"><span class="k">Delivery</span><span class="v">${etaOf(b)}</span></div>`+
    (b.addedAt?`<div class="kv"><span class="k">Added</span><span class="v">${USERS[b.addedBy||'admin'].name} · ${b.addedAt}</span></div>`:''); }
 const tick = () => { S.rates = Object.fromEntries(Object.entries(CORRIDORS).map(([k,c])=>[k,+(c.rate*(1+(Math.random()-.5)*0.004)).toFixed(4)])); };
 const ic = {
@@ -751,22 +753,23 @@ const ic = {
   user:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'
 };
 const STATUS = {
-  checking:['Initiated','t-blue'], approved:['Approved','t-blue'], notprocessed:['Not processed','t-gray'], awaiting:['Pending approval','t-yellow'], processing:['Processing','t-blue'], sent:['Processing','t-blue'], pending_info:['Additional documents required','t-red'],
-  review:['Additional documents under review','t-yellow'], completed:['Completed','t-green'], failed:['Failed','t-gray'], rejected:['Rejected by Admin','t-gray'], expired:['Expired','t-gray'], withdrawn:['Withdrawn','t-gray']
+  checking:['Initiated','t-blue'], approved:['Approved','t-blue'], notprocessed:['Cancelled','t-gray'], awaiting:['Pending approval','t-yellow'], processing:['Processing','t-blue'], sent:['Processing','t-blue'], pending_info:['Documents required','t-red'],
+  review:['Documents under review','t-yellow'], completed:['Completed','t-green'], failed:['Failed','t-gray'], rejected:['Rejected','t-gray'], expired:['Expired','t-gray'], withdrawn:['Withdrawn','t-gray']
 };
 const SINFO = {
   'Initiated':'The Maker submitted the payment. We run our checks before it goes to the Admin. No money has been taken.',
-  'Additional documents required':'We need documents before this payment can go to the Admin. Upload them by the deadline shown, or the payment won\'t be processed. No money has been taken.',
-  'Additional documents under review':'We received your documents and are reviewing them. The payment goes to the Admin once the review is done.',
+  'Documents required':'We need documents before this payment can go to the Admin. Upload them by the deadline shown, or the payment won\'t be processed. No money has been taken.',
+  'Documents under review':'We received your documents and are reviewing them. The payment goes to the Admin once the review is done.',
   'Pending approval':'Waiting for your Admin to approve. The request expires 24 hours after it reaches the Admin. No money has been taken.',
   'Approved':'Your Admin approved the payment with password and OTP, and the total was taken from your balance.',
   'Processing':'The payment is on its way to the beneficiary\'s bank.',
   'Completed':'The beneficiary\'s bank has received the payment. Your payment advice is ready to download.',
   'Failed':'We couldn\'t complete the payment. The full amount, including fee and VAT, is refunded to your balance.',
-  'Not processed':'This payment couldn\'t go ahead and never reached the Admin. No money was taken. Contact support with the reference.',
-  'Rejected by Admin':'Your Admin rejected the payment, with a remark. No money was taken.',
+  'Cancelled':'This payment couldn\'t go ahead and never reached the Admin. No money was taken. Contact support with the reference.',
+  'Rejected':'Your Admin rejected the payment, with a remark. No money was taken.',
   'Expired':'Nobody approved the payment within 24 hours of it reaching the Admin. No money was taken.',
-  'Withdrawn':'The Maker withdrew the payment before it was approved. No money was taken.'
+  'Withdrawn':'The Maker withdrew the payment before it was approved. No money was taken.',
+  'Same day':'Same day delivery is an estimate. It can take longer depending on the receiving bank or wallet, weekends and public holidays in either country.'
 };
 const sinfo = t => SINFO[t]?`<span class="sinfo" tabindex="0" role="button" aria-label="What ${t} means" data-tip="${SINFO[t].replace(/"/g,'&quot;')}" onclick="event.stopPropagation();tipToggle(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>`:'';
 const tag = s => `<span class="tag-w"><span class="tag ${STATUS[s][1]}">${STATUS[s][0]}</span>${sinfo(STATUS[s][0])}</span>`;
@@ -1025,7 +1028,13 @@ function calcCard(){
     </div>
     ${S.pausedCorridor?`<div class="alert a-warn mt8"><span class="ic">${ic.warn}</span><div>Payments to ${CORRIDORS[S.pausedCorridor].name} are paused for now.</div></div>`:''}
     <div class="small muted mt8">Indicative rate. Your supplier receives exactly this amount; the AED total is fixed when your Admin approves.</div>
-    <button class="btn btn-primary btn-lg btn-block mt16" id="cGo" ${parseFloat(k.recv)>0?'':'disabled'} onclick="startPay(S.calc.cc,null,null,S.calc.recv)">Continue</button>`;
+    <button class="btn btn-primary btn-lg btn-block mt16" id="cGo" ${parseFloat(k.recv)>0?'':'disabled'} onclick="startPay(S.calc.cc,null,null,S.calc.recv)">Continue</button>${payAgainRow()}`;
+}
+function payAgainRow(){
+  const seen=new Set(); const rows=[];
+  S.payments.filter(p=>p.status==='completed').forEach(p=>{ const b=ben(p.ben); if(b&&b.status==='active'&&!seen.has(b.id)){ seen.add(b.id); rows.push([p,b]); } });
+  if(!rows.length) return '';
+  return `<div class="pay-again"><div class="small muted">Pay a recent supplier again</div><div class="chips mt8">${rows.slice(0,4).map(([p,b])=>`<button class="cc-btn" onclick="sendAgain('${p.id}')"><span class="flag" style="font-size:16px">${CORRIDORS[b.cc].flag}</span>${b.nick}</button>`).join('')}</div></div>`;
 }
 function calcCur(cc){ const k=S.calc; k.cc=cc; if(k.last==='recv') k.last='send'; keepScroll=true; render(); }
 function calcIn(which,v){ const k=S.calc; v=v.replace(/[^0-9.]/g,''); k[which]=v; k.last=which; const r=S.rates[k.cc]; const c=CORRIDORS[k.cc];
@@ -1072,8 +1081,8 @@ function vBens(){
   return `<div class="row between mb24" style="flex-wrap:wrap"><div><h1>International payments</h1><p class="sub-title" style="margin:0">Businesses you pay abroad.</p></div><button class="btn btn-primary" onclick="startBen()">Add beneficiary</button></div>
   ${intlTabs('b')}
   <div class="card" style="padding:8px 8px 0"><div class="table-wrap"><table>
-  <thead><tr><th>Beneficiary</th><th>Country and method</th><th>Account</th><th>Estimated delivery</th><th>Status</th><th></th></tr></thead>
-  <tbody>${S.beneficiaries.map(b=>{const c=CORRIDORS[b.cc];const m=methodOf(b);return `<tr class="click" onclick="location.hash='#ben/${b.id}'"><td><div style="font-weight:600">${b.nick}</div><div class="small muted">${b.name}</div></td><td><span class="flag">${c.flag}</span> ${c.name} · ${m.name}</td><td class="num">${b.bank}<br><span class="small muted">${b.acct}</span></td><td class="small">${m.eta}</td><td>${btag(b)}</td><td>${b.status==='active'?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();startPay('${b.cc}','${b.id}')">Pay</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>
+  <thead><tr><th>Beneficiary</th><th>Country and method</th><th>Account</th><th>Delivery</th><th>Status</th><th></th></tr></thead>
+  <tbody>${S.beneficiaries.map(b=>{const c=CORRIDORS[b.cc];const m=methodOf(b);return `<tr class="click" onclick="location.hash='#ben/${b.id}'"><td><div style="font-weight:600">${b.nick}</div><div class="small muted">${b.name}</div></td><td><span class="flag">${c.flag}</span> ${c.name} · ${m.name}</td><td class="num">${b.bank}<br><span class="small muted">${b.acct}</span></td><td class="small">${m.eta}${sinfo('Same day')}</td><td>${btag(b)}</td><td>${b.status==='active'?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();startPay('${b.cc}','${b.id}')">Pay</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>
   <p class="small muted mt16">Changing a beneficiary's bank details goes through the same check as adding a new one.</p>`;
 }
 
@@ -1149,6 +1158,7 @@ function startPay(cc,benId,invId,recvPreset){
   const inv = invId? S.invoices.find(i=>i.id===invId):null; const b0 = benId? ben(benId):null;
   S.draft={cc:b0?b0.cc:(cc||'CN'),ben:benId||null,send:'',recv:'',last:'recv',invId:invId||null,invNo:inv?inv.no:'',invFile:!!inv,invNew:false,showAllInv:false,purpose:'goods',sof:'Company funds',other:[],invTyped:'',lockBen:!!invId,fromInv:!!inv,promo:'',disc:0,promoErr:'',amtSum:!!recvPreset};
   if(recvPreset){ S.draft.recv=String(recvPreset); }
+  if(benId) rememberFor(benId);
   calcDraft(); location.hash='#pay/1'; render();
 }
 function payInvoice(id){ const i=S.invoices.find(x=>x.id===id); startPay(ben(i.ben).cc,i.ben,id); }
@@ -1200,14 +1210,14 @@ function invSection(b,invs){
     :`<div class="small muted mb8">No open invoices from ${b.nick} yet. Add the invoice you're paying.</div>`}
     ${d.invNew?form:`<button class="btn btn-secondary btn-block mt8" style="border-style:dashed" onclick="openNewInv()">+ Add new invoice</button>`}`;
 }
-const payWithCard = () => `<div class="card mt16" id="payWith">
-    <h2><span class="stepn">2</span> Pay with</h2>
-    <div class="inv-list">
-      <div class="inv-row sel pm-row"><span class="rb"></span><div class="li-ic">${ic.wallet}</div><div class="li-main"><div class="t">botim business wallet</div><div class="s">Balance ${money(S.balance)} · debited when your Admin approves</div></div></div>
+const payWithCard = () => { const d=S.draft; return d.pwOpen ? `<div class="card mt16" id="payWith">
+    <div class="row between"><h2 style="margin:0"><span class="stepn">2</span> Pay with</h2><a href="javascript:void(0)" class="small" onclick="S.draft.pwOpen=false;keepScroll=true;render()">Done</a></div>
+    <div class="inv-list mt16">
+      <div class="inv-row sel pm-row"><span class="rb"></span><div class="li-ic">${ic.wallet}</div><div class="li-main"><div class="t">botim business wallet</div><div class="s">Debited when your Admin approves</div></div></div>
       <div class="inv-row off pm-row" aria-disabled="true"><span class="rb"></span><div class="li-ic">${ic.clock}</div><div class="li-main"><div class="t">Send now, pay later</div><div class="s">Pay your supplier today and repay later with a botim business loan</div></div><span class="tag t-gray">Coming soon</span></div>
       <div class="inv-row off pm-row" aria-disabled="true"><span class="rb"></span><div class="li-ic">${ic.card}</div><div class="li-main"><div class="t">Debit or credit card</div><div class="s">Pay with your business debit or credit card</div></div><span class="tag t-gray">Coming soon</span></div>
-    </div>
-  </div>`;
+    </div></div>`
+  : `<div class="card mt16" id="payWith"><div class="row between"><div class="row" style="gap:12px"><span class="stepn" style="margin:0">2</span><div><div style="font-weight:600">Pay with botim business wallet</div><div class="small muted">Debited when your Admin approves</div></div></div><a href="javascript:void(0)" class="small" onclick="S.draft.pwOpen=true;keepScroll=true;render()">Change</a></div></div>`; };
 const amtSummary = c => { const d=S.draft;
   return `<div class="card"><div class="row between"><h2 style="margin:0"><span class="stepn">1</span> Amount</h2><a href="javascript:void(0)" class="small" id="amtChange" onclick="S.draft.amtSum=false;keepScroll=true;render()">Change</a></div>
     <div class="amt-sum mt16"><div><div class="lbl">${d.ben?ben(d.ben).nick:'Supplier'} receives</div><div class="big num">${money(parseFloat(d.recv)||0,c.cur)}</div><div class="small muted">${c.flag} ${c.name}</div></div>
@@ -1251,7 +1261,7 @@ function vPay(step){
     ${invSection(b,invs)}
   </div>`:''}
   ${b&&b.status==='active'&&invOk()?`<div class="card mt16">
-    <h2><span class="stepn">5</span> Purpose and documents</h2>
+    <h2><span class="stepn">5</span> Purpose and documents</h2>${d.remembered?`<div class="small muted mb16" style="margin-top:-8px">Filled in from your last payment to ${b.nick}. Change them if they're different this time.</div>`:''}
     <div class="field"><label class="f">Purpose</label><select class="input" onchange="S.draft.purpose=this.value;keepScroll=true;render()">${Object.entries(PURPOSES).map(([k,p])=>`<option value="${k}" ${d.purpose===k?'selected':''}>${p.name}</option>`).join('')}</select></div>
 
     <div class="field"><label class="f">Source of funds</label><select class="input" onchange="S.draft.sof=this.value;keepScroll=true;render()">${['Company funds','Trade finance proceeds','Other'].map(o=>`<option ${d.sof===o?'selected':''}>${o}</option>`).join('')}</select></div>
@@ -1270,7 +1280,9 @@ function vPay(step){
 const invDocs = () => { const d=S.draft; const i=d.invId&&S.invoices.find(x=>x.id===d.invId); return (i&&i.docs)||[]; };
 function addOtherDoc(){ const d=S.draft; const names=PURPOSES[d.purpose].docs.map(x=>x[0].toLowerCase().replace(/[^a-z]+/g,'-')+'.pdf'); d.other.push(names[d.other.length]||'supporting-document-'+(d.other.length+1)+'.pdf'); keepScroll=true; render(); }
 
-function pickBen(id){ Object.assign(S.draft,{ben:id,invNew:false,showAllInv:false,invId:null,invNo:'',invFile:false,other:[]}); if(!S.invoices.some(i=>i.ben===id&&i.status!=='paid')) S.draft.invNew=true; keepScroll=true; render(); }
+function lastPayTo(id){ const ps=S.payments.filter(p=>p.ben===id&&p.purpose); return ps.length?ps[0]:null; }
+function rememberFor(id){ const p=lastPayTo(id); if(!p) return; const std=['Company funds','Trade finance proceeds'].includes(p.sof); Object.assign(S.draft,{purpose:p.purpose,sof:std?p.sof:'Other',sofOther:std?'':p.sof,remembered:true}); }
+function pickBen(id){ Object.assign(S.draft,{ben:id,invNew:false,showAllInv:false,invId:null,invNo:'',invFile:false,other:[],remembered:false}); rememberFor(id); if(!S.invoices.some(i=>i.ben===id&&i.status!=='paid')) S.draft.invNew=true; keepScroll=true; render(); }
 
 
 function payCheck(){ const n=$('#nPay'); if(n) n.disabled=!payReady(); const r=$('#npRail'); if(r) r.innerHTML=npRail(); }
@@ -1357,7 +1369,7 @@ function screenPay(p){
   },3000);
 }
 function clearPay(p){ p.status='awaiting'; p.orderAt=now(); p.expires=plusH(24); notify('admin','Payment waiting for your approval',`${USERS[p.by].name} submitted ${money(total(p))} to ${ben(p.ben).nick}. Expires ${p.expires}.`,'approve:'+p.id); }
-function notProcessed(p){ p.status='notprocessed'; p.failAt=now(); notify(p.by,'Payment not processed',`We couldn't process ${p.id}. No money was taken. Please contact support.`,'#txn/'+p.id); }
+function notProcessed(p){ p.status='notprocessed'; p.failAt=now(); notify(p.by,'Payment cancelled',`We couldn't process ${p.id}, so it was cancelled. No money was taken. Please contact support.`,'#txn/'+p.id); }
 function vPayDone(id){
   const p=pay(id); const b=ben(p.ben);
   return `<div style="max-width:560px;margin:40px auto;text-align:center"><div class="tag t-yellow" style="width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center">${ic.info}</div>
@@ -1516,20 +1528,20 @@ function timeline(p){
   const tail=['Pending approval','Approved','Processing','Completed'];
   if(p.status==='checking'){ add('cur','Initiated',`By ${USERS[p.by].name} · ${p.at}. We're running our checks.`); after(tail); return T; }
   add('done','Initiated',`By ${USERS[p.by].name} · ${p.at}`);
-  if(p.status==='pending_info'){ add('warn','Additional documents required',`Upload by ${p.infoDue}. No money has been taken.`); after(['Additional documents under review',...tail]); return T; }
-  if(p.status==='review'){ add('done','Additional documents required',`Documents sent${p.infoSent?' · '+p.infoSent:''}`); add('cur','Additional documents under review','We\'ll update you once the review is done.'); after(tail); return T; }
-  if(p.infoSent){ add('done','Additional documents required','Documents sent'); add('done','Additional documents under review','Done'); }
-  if(p.status==='notprocessed'){ add('fail','Not processed',`No money was taken. Contact support with reference ${p.id}.`); return T; }
+  if(p.status==='pending_info'){ add('warn','Documents required',`Upload by ${p.infoDue}. No money has been taken.`); after(['Documents under review',...tail]); return T; }
+  if(p.status==='review'){ add('done','Documents required',`Documents sent${p.infoSent?' · '+p.infoSent:''}`); add('cur','Documents under review','We\'ll update you once the review is done.'); after(tail); return T; }
+  if(p.infoSent){ add('done','Documents required','Documents sent'); add('done','Documents under review','Done'); }
+  if(p.status==='notprocessed'){ add('fail','Cancelled',`No money was taken. Contact support with reference ${p.id}.`); return T; }
   if(p.status==='withdrawn'&&!p.orderAt){ add('fail','Withdrawn','No money was taken.'); return T; }
   if(p.status==='awaiting'){ add('cur','Pending approval',`Expires ${p.expires}`); after(tail.slice(1)); return T; }
   if(p.status==='expired'){ add('done','Pending approval',''); add('fail','Expired','No money was taken.'); return T; }
-  if(p.status==='rejected'){ add('done','Pending approval',''); add('fail','Rejected by Admin',`"${p.rejectReason}". No money was taken.`); return T; }
+  if(p.status==='rejected'){ add('done','Pending approval',''); add('fail','Rejected',`"${p.rejectReason}". No money was taken.`); return T; }
   if(p.status==='withdrawn'){ add('done','Pending approval',''); add('fail','Withdrawn','No money was taken.'); return T; }
   add('done','Pending approval','');
   if(p.status==='approved'){ add('cur','Approved',`${p.approvedAt?p.approvedAt+' · ':''}${money(total(p))} taken from your balance`); after(['Processing','Completed']); return T; }
   add('done','Approved',`${p.approvedAt?p.approvedAt+' · ':''}${money(total(p))} taken from your balance`);
   if(p.fail==='notcompleted'){ add('fail','Failed',`${money(total(p))} refunded to your balance · ${p.failAt}`); return T; }
-  if(p.status==='processing'||p.status==='sent'){ add('cur','Processing',`On its way to ${b.bank}. Estimated delivery: ${etaOf(b)}`); after(['Completed']); return T; }
+  if(p.status==='processing'||p.status==='sent'){ add('cur','Processing',`On its way to ${b.bank}. Delivery: ${methodOf(b).eta}`); after(['Completed']); return T; }
   add('done','Processing',`Sent to ${b.bank}${p.sentAt?' · '+p.sentAt:''}`);
   add('done','Completed',`Paid to ${b.bank} · ${p.done}`);
   if(p.fail==='returned'){ add('fail','Failed',`Returned by the beneficiary's bank: ${p.returnReason}. ${money(total(p))} refunded to your balance · ${p.failAt}`); }
@@ -1647,14 +1659,14 @@ function scen(fn){ S=seed(); closeModal(); closeDrawer(true); fn(); render(); }
 const SCEN=[
   ['Maker submits, Admin approves','Sara\'s payment was checked first, then reached Omar. He reviews it in the approvals module: current rate, wallet balance, full beneficiary details, invoice and documents, and authorizes with password and OTP. Then Approved, Processing and Completed.',()=>{S.persona='admin';location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open approval'],
   ['Checked before approval','A payment just submitted shows Initiated while our checks run. When they pass, it becomes Pending approval and the Admin is alerted. Nothing is taken from the balance.',()=>{S.persona='maker';location.hash='#txn/IP-10242';screenPay(pay('IP-10242'));},'Watch it'],
-  ['Not processed','The checks didn\'t clear, or the business didn\'t send the requested details in time. The payment never reaches the Admin; no money was taken and no reason is given.',()=>{S.persona='maker';location.hash='#txn/IP-10234';},'Open'],
+  ['Cancelled','The checks didn\'t clear, or the business didn\'t send the requested details in time. The payment never reaches the Admin; no money was taken and no reason is given.',()=>{S.persona='maker';location.hash='#txn/IP-10234';},'Open'],
   ['Maker creates a payment','Starts on the International payments page: enter the amount and pick the currency, then beneficiary, invoice and purpose. Review and submit.',()=>{S.persona='maker';S.introSeen=true;location.hash='#intl';},'Start'],
   ['Pay from a supplier invoice','Choose an unpaid invoice and pay it; the supplier and invoice are filled in, you enter the amount.',()=>{S.persona='maker';S.introSeen=true;location.hash='#invoices';},'Open'],
   ['Not enough money','Shortfall shown while typing, with three ways to add money.',()=>{S.persona='maker';S.balance=1200;S.introSeen=true;startPay('HK','B3');S.draft.lockBen=false;S.draft.send='5000';S.draft.last='send';calcDraft();},'Try it'],
   ['Rate refreshes before approval','The rate refresh is shortened to 10 seconds here so you can see it update.',()=>{S.persona='admin';S.quoteSecs=10;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open'],
   ['Approval request expired','Nobody approved in time. Shown as Expired; no money taken.',()=>{location.hash='#txn/IP-10236';},'Open'],
-  ['Additional documents required','Before the payment goes to the Admin, the business has 5 hours to upload documents. After upload it moves to Additional documents under review, then to Pending approval.',()=>{S.persona='maker';location.hash='#txn/IP-10238';},'Open'],
-  ['Additional documents under review','Documents were sent and are being reviewed. The payment hasn\'t reached the Admin yet.',()=>{location.hash='#txn/IP-10237';},'Open'],
+  ['Documents required','Before the payment goes to the Admin, the business has 5 hours to upload documents. After upload it moves to Documents under review, then to Pending approval.',()=>{S.persona='maker';location.hash='#txn/IP-10238';},'Open'],
+  ['Documents under review','Documents were sent and are being reviewed. The payment hasn\'t reached the Admin yet.',()=>{location.hash='#txn/IP-10237';},'Open'],
   ['Failed and refunded','The payout failed after the debit; refunded in full.',()=>{location.hash='#txn/IP-10239';},'Open'],
   ['Returned by the bank and refunded','The supplier\'s bank sent it back after completion.',()=>{location.hash='#txn/IP-10233';},'Open'],
   ['Rate changes at Authorize','When Omar clicks Authorize, the final rate is fetched once more. A confirmation shows the final AED total and what Hengtai receives, here with a changed rate, before password and OTP.',()=>{S.persona='admin';S.forceRateMove=true;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Try it'],
