@@ -552,6 +552,13 @@ tr.click:hover td,tbody tr:hover td{background:#FBFAF8}
 .qa .qi{background:var(--stone-2);color:var(--blue-600)}
 .qa .qi svg{width:20px;height:20px}
 .np-step .ix svg{width:12px;height:12px}
+
+/* status info icon and tooltip */
+.tag-w{display:inline-flex;align-items:center;gap:4px;vertical-align:middle}
+.sinfo{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;color:var(--g500);cursor:help;vertical-align:middle;margin-left:4px;flex:none}
+.sinfo:hover,.sinfo:focus{color:var(--blue-600);background:var(--blue-50);outline:none}
+.tl-t .sinfo{margin-left:6px;vertical-align:-3px}
+.tip{position:fixed;z-index:80;display:none;max-width:280px;background:var(--navy,#05153B);color:#fff;font-size:12px;line-height:1.45;padding:10px 12px;border-radius:8px;box-shadow:0 8px 24px rgba(5,21,59,.25);pointer-events:none}
 </style>
 </head>
 <body>
@@ -585,6 +592,7 @@ tr.click:hover td,tbody tr:hover td{background:#FBFAF8}
 <div class="drawer-wrap" id="drawer" onclick="if(event.target===this)closeDrawer()"></div>
 <div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
+<div class="tip" id="tip" role="tooltip"></div>
 
 <button class="proto-btn" onclick="toggleProto()">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -743,10 +751,34 @@ const ic = {
   user:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'
 };
 const STATUS = {
-  checking:['Being checked','t-yellow'], notprocessed:['Not processed','t-gray'], awaiting:['Pending approval','t-yellow'], processing:['Processing','t-blue'], sent:['Money sent','t-blue'], pending_info:['Pending additional details','t-red'],
-  review:['Under review','t-yellow'], completed:['Completed','t-green'], failed:['Failed','t-gray'], rejected:['Rejected by Admin','t-gray'], expired:['Expired','t-gray'], withdrawn:['Withdrawn','t-gray']
+  checking:['Initiated','t-blue'], approved:['Approved','t-blue'], notprocessed:['Not processed','t-gray'], awaiting:['Pending approval','t-yellow'], processing:['Processing','t-blue'], sent:['Processing','t-blue'], pending_info:['Additional documents required','t-red'],
+  review:['Additional documents under review','t-yellow'], completed:['Completed','t-green'], failed:['Failed','t-gray'], rejected:['Rejected by Admin','t-gray'], expired:['Expired','t-gray'], withdrawn:['Withdrawn','t-gray']
 };
-const tag = s => `<span class="tag ${STATUS[s][1]}">${STATUS[s][0]}</span>`;
+const SINFO = {
+  'Initiated':'The Maker submitted the payment. We run our checks before it goes to the Admin. No money has been taken.',
+  'Additional documents required':'We need documents before this payment can go to the Admin. Upload them by the deadline shown, or the payment won\'t be processed. No money has been taken.',
+  'Additional documents under review':'We received your documents and are reviewing them. The payment goes to the Admin once the review is done.',
+  'Pending approval':'Waiting for your Admin to approve. The request expires 24 hours after it reaches the Admin. No money has been taken.',
+  'Approved':'Your Admin approved the payment with password and OTP, and the total was taken from your balance.',
+  'Processing':'The payment is on its way to the beneficiary\'s bank.',
+  'Completed':'The beneficiary\'s bank has received the payment. Your payment advice is ready to download.',
+  'Failed':'We couldn\'t complete the payment. The full amount, including fee and VAT, is refunded to your balance.',
+  'Not processed':'This payment couldn\'t go ahead and never reached the Admin. No money was taken. Contact support with the reference.',
+  'Rejected by Admin':'Your Admin rejected the payment, with a remark. No money was taken.',
+  'Expired':'Nobody approved the payment within 24 hours of it reaching the Admin. No money was taken.',
+  'Withdrawn':'The Maker withdrew the payment before it was approved. No money was taken.'
+};
+const sinfo = t => SINFO[t]?`<span class="sinfo" tabindex="0" role="button" aria-label="What ${t} means" data-tip="${SINFO[t].replace(/"/g,'&quot;')}" onclick="event.stopPropagation();tipToggle(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>`:'';
+const tag = s => `<span class="tag-w"><span class="tag ${STATUS[s][1]}">${STATUS[s][0]}</span>${sinfo(STATUS[s][0])}</span>`;
+function tipShow(el){ const t=$('#tip'); t.textContent=el.dataset.tip; t.style.display='block'; const r=el.getBoundingClientRect(); const w=t.offsetWidth, h=t.offsetHeight; let x=r.left+r.width/2-w/2; x=Math.max(8,Math.min(x,innerWidth-w-8)); let y=r.top-h-8; if(y<8) y=r.bottom+8; t.style.left=x+'px'; t.style.top=y+'px'; t._el=el; }
+function tipHide(){ const t=$('#tip'); if(t){ t.style.display='none'; t._el=null; } }
+function tipToggle(el){ const t=$('#tip'); if(t._el===el&&t.style.display==='block') tipHide(); else tipShow(el); }
+document.addEventListener('mouseover',e=>{ const el=e.target.closest&&e.target.closest('.sinfo'); if(el) tipShow(el); });
+document.addEventListener('mouseout',e=>{ const el=e.target.closest&&e.target.closest('.sinfo'); if(el&&!el.contains(e.relatedTarget)) tipHide(); });
+document.addEventListener('focusin',e=>{ if(e.target.classList&&e.target.classList.contains('sinfo')) tipShow(e.target); });
+document.addEventListener('focusout',e=>{ if(e.target.classList&&e.target.classList.contains('sinfo')) tipHide(); });
+document.addEventListener('click',e=>{ if(!e.target.closest('.sinfo')) tipHide(); });
+window.addEventListener('scroll',tipHide,true);
 const BSTATUS = {active:['Active','t-green'],cooling:['Waiting period','t-blue'],awaiting:['Awaiting Admin approval','t-yellow'],screening:['Being checked','t-yellow'],info:['Additional information needed','t-red'],declined:['Not added','t-gray']};
 const btag = b => `<span class="tag ${BSTATUS[b.status][1]}">${b.status==='cooling'?'Available from '+b.availFrom:BSTATUS[b.status][0]}</span>`;
 
@@ -945,7 +977,7 @@ function vIntl(){
   const pays = S.payments.slice().sort((x,y)=>x.id<y.id?1:-1);
   const fresh = !S.payments.length;
   const due=S.invoices.filter(i=>i.status!=='paid').sort((x,y)=>(x.status==='overdue'?0:1)-(y.status==='overdue'?0:1));
-  const inProg=S.payments.filter(p=>['checking','awaiting','processing','sent','pending_info','review'].includes(p.status)).length;
+  const inProg=S.payments.filter(p=>['checking','awaiting','approved','processing','sent','pending_info','review'].includes(p.status)).length;
   const invPanel = `<div class="card inv-panel" style="align-self:start"><div class="row between mb8"><h3 style="margin:0">Invoices to pay</h3>${due.length?`<a href="#invoices" class="small">View all</a>`:''}</div>
       ${due.length?due.slice(0,4).map(i=>{const b=ben(i.ben);const c=CORRIDORS[b.cc];return `<div class="mini-inv"><span class="flag">${c.flag}</span><div class="li-main"><div class="t" style="font-size:13px">${b.nick}</div><div class="s num">${i.no}</div><div class="s">${i.status==='overdue'?'<span style="color:var(--red600);font-weight:600">Overdue</span> · ':''}Due ${i.due}</div></div><button class="btn btn-sm btn-primary" onclick="payInvoice('${i.id}')">Pay</button></div>`}).join('')+(due.length>4?`<a href="#invoices" class="small">+ ${due.length-4} more</a>`:'')
       :`<div class="empty-mini"><div class="li-ic" style="margin:0 auto 8px">${ic.file}</div><div style="font-weight:600">No invoices yet</div><div class="small muted mt8">Add your suppliers' invoices here, or ask a supplier to upload one, so they're ready when you pay.</div>
@@ -1334,11 +1366,11 @@ function vPayDone(id){
   <div class="row mt24" style="justify-content:center"><a class="btn btn-secondary" href="#txn/${p.id}">Track this payment</a><a class="btn btn-primary" href="#intl">Done</a></div></div>`;
 }
 function executePay(p,rate){
-  const b=ben(p.ben); if(rate){ p.rate=rate; if(p.recvAmt) p.aed=+(p.recvAmt/rate).toFixed(2); } p.status='processing'; p.approvedBy='admin'; p.approvedAt=now();
+  const b=ben(p.ben); if(rate){ p.rate=rate; if(p.recvAmt) p.aed=+(p.recvAmt/rate).toFixed(2); } p.status='approved'; p.approvedBy='admin'; p.approvedAt=now();
   S.balance-=total(p);
   if(p.invId){ const i=S.invoices.find(x=>x.id===p.invId); if(i){ i.status='paid'; } }
   if(p.by==='maker') notify('maker','Payment approved',`Your payment ${p.id} to ${b.nick} was approved and is being processed.`,'#txn/'+p.id);
-  setTimeout(()=>{ p.status='sent'; p.sentAt=now(); if(location.hash==='#txn/'+p.id){ keepScroll=true; render(); } },2500);
+  setTimeout(()=>{ p.status='processing'; p.sentAt=now(); if(location.hash==='#txn/'+p.id){ keepScroll=true; render(); } },2500);
   setTimeout(()=>{ p.status='completed'; p.done=now(); p.payRef='B2B-'+Math.random().toString(36).slice(2,6).toUpperCase()+'-'+p.id.slice(3); notify(p.by,'Payment completed',`${p.id} to ${b.nick} was paid. Your payment advice is ready.`,'#txn/'+p.id); if(location.hash==='#txn/'+p.id){ keepScroll=true; render(); } },5500);
 }
 
@@ -1480,26 +1512,27 @@ function fillOtp(){ document.querySelectorAll('.otp input').forEach((i,k)=>i.val
 /* ================= TRANSACTION DETAIL ================= */
 function timeline(p){
   const b=ben(p.ben); const T=[]; const add=(cls,t,s)=>T.push({cls,t,s});
-  const rest=(from)=>{ ['Being checked','Pending approval','Processing','Money sent','Completed'].slice(from).forEach(x=>add('',x,'')); };
+  const after=(arr)=>arr.forEach(x=>add('',x,''));
+  const tail=['Pending approval','Approved','Processing','Completed'];
+  if(p.status==='checking'){ add('cur','Initiated',`By ${USERS[p.by].name} · ${p.at}. We're running our checks.`); after(tail); return T; }
   add('done','Initiated',`By ${USERS[p.by].name} · ${p.at}`);
-  if(p.status==='checking'){ add('cur','Being checked','We\'re checking a few details before it goes to your Admin. No money has been taken.'); rest(1); return T; }
-  if(p.status==='pending_info'){ add('warn','Pending additional details',`Reply by ${p.infoDue}. No money has been taken.`); rest(1); return T; }
-  if(p.status==='review'){ add('done','Pending additional details',`Details sent${p.infoSent?' · '+p.infoSent:''}`); add('cur','Under review','We\'ll update you once the review is complete.'); rest(1); return T; }
-  if(p.status==='notprocessed'){ add('fail','Not processed',`We couldn't process this payment. No money was taken. Contact support with reference ${p.id}.`); return T; }
-  if(p.status==='withdrawn'&&!p.orderAt){ add('fail','Withdrawn','The request was withdrawn. No money was taken.'); return T; }
-  if(p.infoSent) add('done','Pending additional details','Details sent'); else add('done','Being checked','Done');
-  if(p.status==='awaiting'){ add('cur','Pending approval',`Expires ${p.expires}`); rest(2); return T; }
-  if(p.status==='expired'){ add('done','Pending approval',''); add('fail','Expired','The request expired before it was approved. No money was taken.'); return T; }
+  if(p.status==='pending_info'){ add('warn','Additional documents required',`Upload by ${p.infoDue}. No money has been taken.`); after(['Additional documents under review',...tail]); return T; }
+  if(p.status==='review'){ add('done','Additional documents required',`Documents sent${p.infoSent?' · '+p.infoSent:''}`); add('cur','Additional documents under review','We\'ll update you once the review is done.'); after(tail); return T; }
+  if(p.infoSent){ add('done','Additional documents required','Documents sent'); add('done','Additional documents under review','Done'); }
+  if(p.status==='notprocessed'){ add('fail','Not processed',`No money was taken. Contact support with reference ${p.id}.`); return T; }
+  if(p.status==='withdrawn'&&!p.orderAt){ add('fail','Withdrawn','No money was taken.'); return T; }
+  if(p.status==='awaiting'){ add('cur','Pending approval',`Expires ${p.expires}`); after(tail.slice(1)); return T; }
+  if(p.status==='expired'){ add('done','Pending approval',''); add('fail','Expired','No money was taken.'); return T; }
   if(p.status==='rejected'){ add('done','Pending approval',''); add('fail','Rejected by Admin',`"${p.rejectReason}". No money was taken.`); return T; }
-  if(p.status==='withdrawn'){ add('done','Pending approval',''); add('fail','Withdrawn','The request was withdrawn. No money was taken.'); return T; }
-  add('done','Pending approval',`Approved${p.approvedAt?' · '+p.approvedAt:''}`);
-  if(p.status==='processing'){ add('cur','Processing',`${money(total(p))} taken from your balance`); rest(3); return T; }
-  add('done','Processing',`${money(total(p))} taken from your balance`);
-  if(p.fail==='notcompleted'){ add('fail','Failed',`We couldn't complete this payment. ${money(total(p))} was refunded to your balance · ${p.failAt}`); return T; }
-  if(p.status==='sent'){ add('done','Money sent',`Sent to ${b.bank}${p.sentAt?' · '+p.sentAt:''}`); add('cur','Completed',`Estimated delivery: ${etaOf(b)}`); return T; }
-  add('done','Money sent',`Sent to ${b.bank}${p.sentAt?' · '+p.sentAt:''}`);
+  if(p.status==='withdrawn'){ add('done','Pending approval',''); add('fail','Withdrawn','No money was taken.'); return T; }
+  add('done','Pending approval','');
+  if(p.status==='approved'){ add('cur','Approved',`${p.approvedAt?p.approvedAt+' · ':''}${money(total(p))} taken from your balance`); after(['Processing','Completed']); return T; }
+  add('done','Approved',`${p.approvedAt?p.approvedAt+' · ':''}${money(total(p))} taken from your balance`);
+  if(p.fail==='notcompleted'){ add('fail','Failed',`${money(total(p))} refunded to your balance · ${p.failAt}`); return T; }
+  if(p.status==='processing'||p.status==='sent'){ add('cur','Processing',`On its way to ${b.bank}. Estimated delivery: ${etaOf(b)}`); after(['Completed']); return T; }
+  add('done','Processing',`Sent to ${b.bank}${p.sentAt?' · '+p.sentAt:''}`);
   add('done','Completed',`Paid to ${b.bank} · ${p.done}`);
-  if(p.fail==='returned'){ add('fail','Failed',`Returned by the beneficiary's bank: ${p.returnReason}. ${money(total(p))} was refunded to your balance · ${p.failAt}`); }
+  if(p.fail==='returned'){ add('fail','Failed',`Returned by the beneficiary's bank: ${p.returnReason}. ${money(total(p))} refunded to your balance · ${p.failAt}`); }
   return T;
 }
 function vTxn(id){
@@ -1519,7 +1552,7 @@ function vTxn(id){
   <div class="row between mb24" style="flex-wrap:wrap"><div><h1>${nm(total(p))} to ${b.nick}</h1><p class="sub-title" style="margin:0">${p.id} · initiated ${p.at} by ${USERS[p.by].name}</p></div>
   <div class="row">${tag(p.status)}${p.status==='completed'?`<button class="btn btn-primary" onclick="downloadAdvice('${p.id}')">${ic.dl} Download payment advice</button>`:''}${pendingNotMine&&isAdmin()?`<button class="btn btn-primary" onclick="go('approve:${p.id}')">Review</button>`:''}${canWithdraw?`<button class="btn btn-danger" onclick="withdrawReq('${p.id}')">Withdraw</button>`:''}</div></div>
   <div class="grid g-main"><div class="grid" style="align-content:start">${banner}
-    <div class="card"><h3>Progress</h3><div class="tl mt16">${timeline(p).map(x=>`<div class="tl-i ${x.cls}"><span class="tl-dot">${x.cls==='done'?ic.check:x.cls==='fail'?ic.x:''}</span><div><div class="tl-t">${x.t}</div><div class="tl-s">${x.s}</div></div></div>`).join('')}</div></div></div>
+    <div class="card"><h3>Progress</h3><div class="tl mt16">${timeline(p).map(x=>`<div class="tl-i ${x.cls}"><span class="tl-dot">${x.cls==='done'?ic.check:x.cls==='fail'?ic.x:''}</span><div><div class="tl-t">${x.t}${sinfo(x.t)}</div><div class="tl-s">${x.s}</div></div></div>`).join('')}</div></div></div>
   <div class="grid" style="align-content:start">
     <div class="card"><h3>Payment</h3>
       <div class="kv"><span class="k">You send</span><span class="v">${nm(p.aed)}</span></div><div class="kv"><span class="k">Fee</span><span class="v">${feeTxt(c.cur,(typeof p!=='undefined'&&p&&p.disc)||0)}</span></div>
@@ -1612,16 +1645,16 @@ function emailPreview(){
 /* ================= SCENARIOS ================= */
 function scen(fn){ S=seed(); closeModal(); closeDrawer(true); fn(); render(); }
 const SCEN=[
-  ['Maker submits, Admin approves','Sara\'s payment was checked first, then reached Omar. He reviews it in the approvals module: current rate, wallet balance, full beneficiary details, invoice and documents, and authorizes with password and OTP. Then Processing, Money sent and Completed.',()=>{S.persona='admin';location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open approval'],
-  ['Checked before approval','A payment just submitted shows Being checked. When the checks pass, it becomes Pending approval and the Admin is alerted. Nothing is taken from the balance.',()=>{S.persona='maker';location.hash='#txn/IP-10242';screenPay(pay('IP-10242'));},'Watch it'],
+  ['Maker submits, Admin approves','Sara\'s payment was checked first, then reached Omar. He reviews it in the approvals module: current rate, wallet balance, full beneficiary details, invoice and documents, and authorizes with password and OTP. Then Approved, Processing and Completed.',()=>{S.persona='admin';location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open approval'],
+  ['Checked before approval','A payment just submitted shows Initiated while our checks run. When they pass, it becomes Pending approval and the Admin is alerted. Nothing is taken from the balance.',()=>{S.persona='maker';location.hash='#txn/IP-10242';screenPay(pay('IP-10242'));},'Watch it'],
   ['Not processed','The checks didn\'t clear, or the business didn\'t send the requested details in time. The payment never reaches the Admin; no money was taken and no reason is given.',()=>{S.persona='maker';location.hash='#txn/IP-10234';},'Open'],
   ['Maker creates a payment','Starts on the International payments page: enter the amount and pick the currency, then beneficiary, invoice and purpose. Review and submit.',()=>{S.persona='maker';S.introSeen=true;location.hash='#intl';},'Start'],
   ['Pay from a supplier invoice','Choose an unpaid invoice and pay it; the supplier and invoice are filled in, you enter the amount.',()=>{S.persona='maker';S.introSeen=true;location.hash='#invoices';},'Open'],
   ['Not enough money','Shortfall shown while typing, with three ways to add money.',()=>{S.persona='maker';S.balance=1200;S.introSeen=true;startPay('HK','B3');S.draft.lockBen=false;S.draft.send='5000';S.draft.last='send';calcDraft();},'Try it'],
   ['Rate refreshes before approval','The rate refresh is shortened to 10 seconds here so you can see it update.',()=>{S.persona='admin';S.quoteSecs=10;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open'],
   ['Approval request expired','Nobody approved in time. Shown as Expired; no money taken.',()=>{location.hash='#txn/IP-10236';},'Open'],
-  ['Pending additional details','Before the payment goes to the Admin, the business has 5 hours to upload documents. After upload it moves to Under review, then to Pending approval.',()=>{S.persona='maker';location.hash='#txn/IP-10238';},'Open'],
-  ['Under review','Additional details were sent and are being reviewed. The payment hasn\'t reached the Admin yet.',()=>{location.hash='#txn/IP-10237';},'Open'],
+  ['Additional documents required','Before the payment goes to the Admin, the business has 5 hours to upload documents. After upload it moves to Additional documents under review, then to Pending approval.',()=>{S.persona='maker';location.hash='#txn/IP-10238';},'Open'],
+  ['Additional documents under review','Documents were sent and are being reviewed. The payment hasn\'t reached the Admin yet.',()=>{location.hash='#txn/IP-10237';},'Open'],
   ['Failed and refunded','The payout failed after the debit; refunded in full.',()=>{location.hash='#txn/IP-10239';},'Open'],
   ['Returned by the bank and refunded','The supplier\'s bank sent it back after completion.',()=>{location.hash='#txn/IP-10233';},'Open'],
   ['Rate changes at Authorize','When Omar clicks Authorize, the final rate is fetched once more. A confirmation shows the final AED total and what Hengtai receives, here with a changed rate, before password and OTP.',()=>{S.persona='admin';S.forceRateMove=true;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Try it'],
