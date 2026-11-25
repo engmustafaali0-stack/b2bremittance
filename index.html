@@ -521,6 +521,37 @@ label.f{font-size:12px;font-weight:500;color:var(--g800);margin-bottom:6px}
 
 .phead{background:#F4F6F9;border-bottom-color:#E8EBF1}
 .phead .tabs a:not(.active) .c,.phead .tabs button:not(.on) .c{background:#fff}
+
+/* ===== stone and navy palette, blue gradients and line icons (from the botim business website) ===== */
+:root{--stone:#F7F6F4;--stone-2:#F2EFED;--stone-line:#E9E5E0;--navy:#05153B;--slate:#556076;--page:var(--stone);--line:#EEEAE5;--g800:#05153B;--g500:#556076;--g700:#3A4560;--g300:#E2DED8;--g100:#F2EFED;
+  --grad-blue:radial-gradient(120% 140% at 85% 0%,#3B5CC6 0%,#2140B6 30%,#1126A9 62%,#0718A2 100%)}
+html,body{background:var(--stone);color:var(--navy)}
+.phead{background:#fff;border-bottom-color:var(--stone-line)}
+.phead h1,h1,h2,h3{color:var(--navy)}
+.top{border-bottom-color:var(--stone-line)}
+.side,.ribbon{background:var(--navy)}
+.card{border-color:var(--line);box-shadow:none}
+th{background:var(--stone)}
+tr.click:hover td,tbody tr:hover td{background:#FBFAF8}
+.btn{border-radius:999px}
+.btn-secondary{background:#fff;border-color:var(--g300)}
+.btn-secondary:hover{background:var(--stone)}
+.calc .mid,.drawer-b{background:var(--stone)}
+.np-rail .card{background:linear-gradient(180deg,#F4F2F0,#F7F6F4)}
+.tabs .c{background:var(--stone-2)}
+/* graded blue on featured surfaces */
+.balance,.intro-hero{background:var(--grad-blue)!important;border:0}
+.balance::after{background:radial-gradient(circle,rgba(255,255,255,.10),rgba(255,255,255,0) 70%)}
+.strip{background:linear-gradient(180deg,#F4F2F0,#F7F6F4);border-color:var(--line)}
+.strip .si{background:var(--grad-blue)}
+.nav a.active{background:linear-gradient(90deg,#1A33B0,#001498)}
+/* line icons in Core Blue on soft stone */
+.li-ic{background:var(--stone-2);color:var(--blue-600)}
+.li-ic svg{width:20px;height:20px}
+.qa button{box-shadow:none}
+.qa .qi{background:var(--stone-2);color:var(--blue-600)}
+.qa .qi svg{width:20px;height:20px}
+.np-step .ix svg{width:12px;height:12px}
 </style>
 </head>
 <body>
@@ -562,6 +593,17 @@ label.f{font-size:12px;font-weight:500;color:var(--g800);margin-bottom:6px}
 <div class="proto" id="proto"></div>
 
 <script>
+const LI=(p=>Object.fromEntries(Object.entries(p).map(([k,v])=>[k,`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${v}</svg>`])))({
+  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  receipt:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+  bank:'<path d="M3 10 12 4l9 6"/><path d="M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>',
+  phone:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18h2"/>',
+  card:'<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M7 15h3"/>',
+  people:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14a6 6 0 0 1 3.5 6"/>',
+  monitor:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>',
+  wallet:'<path d="M4 7a2 2 0 0 1 2-2h12v4"/><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M16 13.5h2"/>',
+  check:'<path d="M5 12.5 10 17l9-10"/>'
+});
 /* ================= reference data (sample) ================= */
 const CORRIDORS = {
   CN:{name:'China',flag:'🇨🇳',cur:'CNY',rate:1.9412,methods:[{id:'bank',name:'Bank account',eta:'Same day to 1 business day',cpv:true},{id:'wallet',name:'Alipay business account',eta:'Within minutes',cpv:true}]},
@@ -642,10 +684,10 @@ function seed(){
       {id:'RF-21877',type:'Refund',summary:'AED 340.00 refund for smart code payment',by:'maker',at:'15 Sep, 15:27',status:'approved',checker:'admin',checkAt:'15 Sep, 15:28',remark:'Customer returned item'}
     ],
     other:[
-      {t:'Paylink payment received',s:'Order #4471 · 29 Oct, 11:05',amt:'+ AED 1,250.00',icon:'🔗'},
-      {t:'Invoice paid by customer',s:'INV-2026-0912 · Gulf Retail LLC · 29 Oct, 09:40',amt:'+ AED 8,400.00',icon:'🧾'},
-      {t:'Transfer to UAE bank account',s:'Emirates NBD •••• 1182 · 28 Oct, 17:30',amt:'− AED 6,000.00',icon:'🏦'},
-      {t:'Smart code payment received',s:'Store: Deira · 28 Oct, 13:12',amt:'+ AED 340.00',icon:'📱'}
+      {t:'Paylink payment received',s:'Order #4471 · 29 Oct, 11:05',amt:'+ AED 1,250.00',icon:LI.link},
+      {t:'Invoice paid by customer',s:'INV-2026-0912 · Gulf Retail LLC · 29 Oct, 09:40',amt:'+ AED 8,400.00',icon:LI.receipt},
+      {t:'Transfer to UAE bank account',s:'Emirates NBD •••• 1182 · 28 Oct, 17:30',amt:'− AED 6,000.00',icon:LI.bank},
+      {t:'Smart code payment received',s:'Store: Deira · 28 Oct, 13:12',amt:'+ AED 340.00',icon:LI.phone}
     ],
     notif:{
       admin:[
@@ -850,9 +892,9 @@ function vHome(){
       </div>
       <div class="card"><h3>Quick actions</h3>
         <div class="qa mt8">
-          <button onclick="soon()"><span class="qi">🧾</span>Create invoice</button>
-          <button onclick="soon()"><span class="qi">🔗</span>Send paylink</button>
-          <button onclick="soon()"><span class="qi">📱</span>Smart code</button>
+          <button onclick="soon()"><span class="qi">${LI.receipt}</span>Create invoice</button>
+          <button onclick="soon()"><span class="qi">${LI.link}</span>Send paylink</button>
+          <button onclick="soon()"><span class="qi">${LI.phone}</span>Smart code</button>
           <button onclick="location.hash='#send'"><span class="qi">${ic.arrow}</span>Transfer</button>
           <button onclick="goIntl()"><span class="nb">NEW</span><span class="qi">${ic.globe}</span>Pay abroad</button>
         </div>
@@ -870,10 +912,10 @@ function vHome(){
         <a href="#approvals" class="btn btn-ghost btn-sm mt8" style="padding:0">All approvals ${ic.arrow}</a>
       </div>
       <div class="card"><h3>Your products</h3>
-        <div class="prod"><div class="li-ic">💳</div><div class="li-main"><div class="t">Payments</div><div class="s">Invoice, paylink, smart code</div></div><span class="tag t-green">Active</span></div>
+        <div class="prod"><div class="li-ic">${LI.card}</div><div class="li-main"><div class="t">Payments</div><div class="s">Invoice, paylink, smart code</div></div><span class="tag t-green">Active</span></div>
         <div class="prod"><div class="li-ic" style="background:var(--blue-50);color:var(--blue-600)">${ic.globe}</div><div class="li-main"><div class="t">International payments</div><div class="s">Pay suppliers abroad</div></div>${S.disabled?'<span class="tag t-gray">Unavailable</span>':'<span class="tag t-blue">New</span>'}</div>
-        <div class="prod"><div class="li-ic">👥</div><div class="li-main"><div class="t">Payroll (WPS)</div><div class="s">Pay salaries through WPS</div></div><button class="btn btn-sm btn-secondary" onclick="soon()">Apply</button></div>
-        <div class="prod"><div class="li-ic">🖥️</div><div class="li-main"><div class="t">Intelligent hardware</div><div class="s">POS devices for your stores</div></div><button class="btn btn-sm btn-secondary" onclick="soon()">Apply</button></div>
+        <div class="prod"><div class="li-ic">${LI.people}</div><div class="li-main"><div class="t">Payroll (WPS)</div><div class="s">Pay salaries through WPS</div></div><button class="btn btn-sm btn-secondary" onclick="soon()">Apply</button></div>
+        <div class="prod"><div class="li-ic">${LI.monitor}</div><div class="li-main"><div class="t">Intelligent hardware</div><div class="s">POS devices for your stores</div></div><button class="btn btn-sm btn-secondary" onclick="soon()">Apply</button></div>
       </div>
       <div class="card"><h3>Supplier invoices</h3>
         <div class="grid g2 mt8"><div class="stat"><div class="k">Overdue</div><div class="v num" style="color:var(--red600)">${S.invoices.filter(i=>i.status==='overdue').length}</div></div><div class="stat"><div class="k">Due in 7 days</div><div class="v num">2</div></div></div>
@@ -885,8 +927,8 @@ function vHome(){
 function vSend(){
   return `<h1>Transfer</h1><p class="sub-title">Where is the money going?</p>
   <div class="grid g3">
-    <button class="choice" onclick="soon()"><div class="li-ic mb16">💚</div><div class="t">Botim wallet</div><div class="s">Send to another botim account instantly</div></button>
-    <button class="choice" onclick="soon()"><div class="li-ic mb16">🏦</div><div class="t">UAE bank account</div><div class="s">Local transfer to any UAE bank</div></button>
+    <button class="choice" onclick="soon()"><div class="li-ic mb16">${LI.wallet}</div><div class="t">Botim wallet</div><div class="s">Send to another botim account instantly</div></button>
+    <button class="choice" onclick="soon()"><div class="li-ic mb16">${LI.bank}</div><div class="t">UAE bank account</div><div class="s">Local transfer to any UAE bank</div></button>
     <button class="choice ${S.disabled?'disabled':''}" onclick="goIntl()" style="${S.disabled?'':'border-color:var(--blue-600)'}"><div class="row between"><div class="li-ic mb16" style="background:var(--blue-50);color:var(--blue-600)">${ic.globe}</div>${S.disabled?ic.lock:'<span class="tag t-blue">New</span>'}</div><div class="t">International</div><div class="s">Pay overseas suppliers in their local currency</div></button>
   </div>`;
 }
@@ -1204,7 +1246,7 @@ function npRail(){
   const d=S.draft; if(!d) return ''; const c=CORRIDORS[d.cc]; const b=d.ben?ben(d.ben):null; const amt=(parseFloat(d.recv)||0)>0;
   const st=[['Amount',amt],['Pay with',amt],['Beneficiary',!!(b&&b.status==='active')],['Invoice',!!(b&&b.status==='active'&&invOk())],['Purpose and documents',payReady()]];
   let cur=st.findIndex(x=>!x[1]); if(cur<0) cur=st.length;
-  return `<div class="card"><h3 style="margin-bottom:4px">Your payment</h3><div class="np-steps">${st.map(([t,ok],i)=>`<div class="np-step ${ok?'done':i===cur?'cur':''}"><span class="ix">${ok?'✓':i+1}</span>${t}</div>`).join('')}</div>
+  return `<div class="card"><h3 style="margin-bottom:4px">Your payment</h3><div class="np-steps">${st.map(([t,ok],i)=>`<div class="np-step ${ok?'done':i===cur?'cur':''}"><span class="ix">${ok?LI.check:i+1}</span>${t}</div>`).join('')}</div>
     <div class="np-sum"><div class="kv"><span class="k">${b?b.nick:'Supplier'} receives</span><span class="v num">${money(parseFloat(d.recv)||0,c.cur)}</span></div><div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${S.rates[d.cc].toFixed(4)}</span></div><div class="kv total"><span class="k">Total</span><span class="v">${money(dTot())}</span></div><div class="small muted">Indicative. Fixed when your Admin approves.</div></div>
 </div>`;
 }
