@@ -344,9 +344,187 @@ body.hide-dec .decision{display:none}
 .cc-btn.sel{border-color:var(--blue-600);background:var(--blue-25);color:var(--blue-600)}
 .cc-btn.off{opacity:.5;cursor:not-allowed}
 @media (max-width:860px){.qa{grid-template-columns:repeat(3,1fr)}}
+
+/* ================= v3 design layer: botim business UI kit ================= */
+:root{--sb:#0A0A0A;--line:#F0F0F0;--page:#FAFAFA;--shadow-card:0 1px 3px rgba(0,0,0,.04);--shadow-modal:0 24px 48px rgba(0,0,0,.18),0 8px 16px rgba(0,0,0,.10)}
+html,body{background:var(--page)}
+body{-webkit-font-smoothing:antialiased}
+/* prototype ribbon: slim and quiet */
+.ribbon{background:var(--sb);color:rgba(255,255,255,.7);font-size:12px;height:36px;padding:0 20px;justify-content:space-between;flex-wrap:nowrap;border-bottom:1px solid rgba(255,255,255,.08)}
+.ribbon b{color:#fff}
+.rb-sw button{border-color:rgba(255,255,255,.25);padding:2px 10px;font-weight:500}
+.rb-sw button.on{background:#fff;color:var(--sb)}
+/* app shell */
+.app{display:flex;min-height:100vh}
+.col{flex:1;min-width:0;display:flex;flex-direction:column}
+.side{width:264px;flex:none;background:var(--sb);border-right:0;padding:16px 12px;position:sticky;top:0;height:100vh;overflow:auto;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent}
+.side-head{display:flex;align-items:center;height:40px;padding:0 6px;margin-bottom:16px}
+.side .brand{color:#fff;font-size:22px}
+.side .brand .pill{background:transparent;border:1.2px solid rgba(255,255,255,.85);color:#fff;font-size:9px;padding:2px 7px}
+.side-foot{margin-top:auto;padding-top:12px;border-top:1px solid rgba(255,255,255,.12)}
+.side-foot a{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;color:rgba(255,255,255,.5);font-size:12px;font-weight:500}
+.side-foot a:hover{color:#fff;background:rgba(255,255,255,.08)}
+.side-foot a.active{color:#fff;background:rgba(255,255,255,.12)}
+.nav-group{font-size:11px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.6px;margin:20px 12px 8px}
+.nav a{height:40px;padding:0 12px;gap:12px;border-radius:8px;color:rgba(255,255,255,.7);font-weight:500;font-size:14px;margin-bottom:4px}
+.nav a .ni{width:18px;height:18px;flex:none;display:grid;place-items:center;color:rgba(255,255,255,.5)}
+.nav a:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav a:hover .ni{color:#fff}
+.nav a.active{background:var(--blue-600);color:#fff}
+.nav a.active .ni{color:#fff}
+.nav a.sub{height:34px;padding-left:42px;font-size:13px;font-weight:500;color:rgba(255,255,255,.55);margin-bottom:2px}
+.nav a.sub.active{background:rgba(255,255,255,.12);color:#fff}
+.nav a .count{background:#fff;color:var(--blue-600);font-size:11px;padding:1px 8px}
+.nav a:not(.active) .count{background:rgba(255,255,255,.14);color:#fff}
+.nav a .new{background:rgba(255,255,255,.14);color:#fff;font-size:9px;padding:2px 7px}
+.nav a.active .new{background:#fff;color:var(--blue-600)}
+.nav a .lock{color:rgba(255,255,255,.4)}
+/* top bar */
+.top{position:sticky;top:0;z-index:20;height:64px;background:#fff;border-bottom:1px solid var(--line);padding:0 24px;gap:12px}
+.top .brand{display:none}
+.biz{border:1px solid var(--g300);border-radius:8px;height:40px;padding:0 12px;font-size:13px;background:#fff}
+.who{padding:4px 8px 4px 4px;border-radius:8px}
+.avatar{width:32px;height:32px;background:var(--blue-100);color:var(--blue-600);font-size:12px}
+.who .meta div:first-child{font-weight:600;font-size:13px}
+.dd{top:58px}
+/* page header band */
+.phead{background:#fff;border-bottom:1px solid var(--line);padding:24px 32px}
+.phead:empty{display:none}
+.phead-in{max-width:1120px;margin:0 auto}
+.phead h1{font-size:24px;line-height:32px;margin:0}
+.phead .sub-title{margin:4px 0 0!important;font-size:14px}
+.phead .crumbs{font-size:12px;margin-bottom:8px}
+.phead .row{margin-bottom:0!important;align-items:center}
+.phead .row h1 + .sub-title{margin-top:4px!important}
+.phead.has-tabs{padding-bottom:0}
+.phead .tabs{margin:20px 0 0;border-bottom:0}
+.main{padding:32px 32px 96px}
+.page{max-width:1120px}
+h2{font-size:16px;font-weight:600;line-height:24px;margin:0 0 16px}
+h3{font-size:14px;font-weight:600;margin:0 0 8px}
+.sub-title{color:var(--g500)}
+/* cards */
+.card{border:1px solid var(--line);border-radius:12px;padding:24px;box-shadow:var(--shadow-card)}
+.grid{gap:20px}
+.mt16{margin-top:20px}
+.card .card{box-shadow:none}
+.card:has(> .table-wrap:first-child){padding:0!important;overflow:hidden}
+.card:has(> .table-wrap:first-child) table td:first-child,.card:has(> .table-wrap:first-child) table th:first-child{padding-left:24px}
+.card:has(> .table-wrap:first-child) table td:last-child,.card:has(> .table-wrap:first-child) table th:last-child{padding-right:24px}
+.card:has(> .table-wrap:first-child) tbody tr:last-child td{border-bottom:0}
+.stepn{width:24px;height:24px;font-family:"Space Grotesk",Inter,sans-serif;font-weight:600;font-size:13px}
+/* tables */
+th{background:var(--page);height:44px;padding:0 16px;font-size:12px;font-weight:600;color:var(--g500);border-bottom:1px solid var(--line)}
+td{height:56px;padding:12px 16px;border-bottom:1px solid var(--line);font-size:14px}
+tr.click:hover td,tbody tr:hover td{background:var(--blue-25)}
+td.num,td .num{font-family:"Space Grotesk",Inter,sans-serif;font-weight:500}
+td.num{white-space:nowrap}
+/* status badges: subtle with dot */
+.tag{border-radius:6px;height:22px;padding:0 8px;font-size:12px;font-weight:600;gap:6px}
+.tag::before{width:6px;height:6px}
+.t-blue{background:var(--blue-50);color:var(--blue-600)}
+.t-green{background:var(--green50);color:#15803D}
+.t-yellow{background:var(--yellow50);color:#B45309}
+.t-red{background:var(--red50);color:var(--red600)}
+.t-gray{background:var(--g100);color:var(--g700)}
+/* tabs (kit underline style) */
+.tabs{gap:8px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.tabs a,.tabs button{height:44px;padding:0 4px;margin-right:16px;display:inline-flex;align-items:center;gap:8px;color:var(--g500);font-weight:500;font-size:14px;border:0;border-bottom:2px solid transparent;background:none;cursor:pointer;margin-bottom:-1px}
+.tabs a.active,.tabs button.on{color:var(--blue-600);font-weight:600;border-bottom-color:var(--blue-600)}
+.tabs .c{background:var(--g100);color:var(--g600);border-radius:6px;font-size:11px;padding:1px 7px;margin-left:0;font-family:"Space Grotesk",Inter,sans-serif}
+.tabs a.active .c,.tabs button.on .c{background:var(--blue-50);color:var(--blue-600)}
+/* buttons */
+.btn{height:40px;border-radius:8px;font-size:14px;font-weight:600;padding:0 16px}
+.btn-sm{height:32px;font-size:12px;padding:0 12px}
+.btn-lg{height:48px;font-size:15px;padding:0 24px}
+.btn-secondary{background:var(--g100);border-color:var(--g300);color:var(--g800)}
+.btn-primary:disabled{background:var(--g300);color:var(--g400)}
+.btn-ghost:hover{background:var(--g100)}
+/* forms */
+label.f{font-size:12px;font-weight:500;color:var(--g800);margin-bottom:6px}
+.input,select.input,textarea.input{height:44px;border-color:var(--g300);border-radius:8px;padding:0 14px;font-size:14px}
+.input::placeholder{color:var(--g500)}
+.field{margin-bottom:20px}
+.help{font-size:12px}
+.filters{gap:12px}
+.filters .input{height:40px}
+/* alerts */
+.alert{border-radius:8px;padding:14px 16px;font-size:13px;border:1px solid transparent}
+.a-info{background:var(--blue-50);border-color:var(--blue-200);color:var(--blue-900)}
+.a-ok{background:var(--green50);border-color:#BBF7D0}
+.a-warn{background:var(--yellow50);border-color:#FDE68A}
+.a-err{background:var(--red50);border-color:#FECACA}
+/* key-value rows */
+.kv{padding:10px 0;font-size:14px}
+.kv .v{font-weight:500}
+.kv.total{border-top:1px solid var(--line);padding-top:14px;margin-top:6px}
+.kv.total .v{font-family:"Space Grotesk",Inter,sans-serif;font-size:16px;font-weight:600}
+/* stat tiles */
+.stat .k{font-size:13px;font-weight:500;color:var(--g500)}
+.stat .v{font-family:"Space Grotesk",Inter,sans-serif;font-size:28px;font-weight:600;line-height:36px;margin-top:8px}
+/* lists */
+.list-item{padding:14px 0;border-bottom:1px solid var(--line)}
+.li-ic{border-radius:10px;background:var(--g100)}
+.li-main .t{font-weight:500}
+/* timeline */
+.tl-i{padding-bottom:22px}
+.tl-dot{width:24px;height:24px}
+.tl-t{font-weight:600;font-size:14px}
+.tl-s{font-size:12px;margin-top:2px}
+/* choice cards */
+.choice,.opt,.inv-row{border:1px solid var(--g300);border-radius:12px}
+.choice.sel,.inv-row.sel,.opt.sel{border-color:var(--blue-600);background:var(--blue-25);box-shadow:0 0 0 1px var(--blue-600) inset}
+.calc{border-radius:12px;border-color:var(--g300)}
+.calc .mid{background:var(--page)}
+.quote-live{border:1px solid var(--blue-200);box-shadow:0 0 0 3px var(--blue-25)}
+/* modal, drawer */
+.overlay,.drawer-wrap{background:rgba(8,8,9,.45)}
+.modal{border-radius:12px;box-shadow:var(--shadow-modal)}
+.modal-h,.drawer-h{padding:20px 24px;border-bottom:1px solid var(--line)}
+.modal-h h3,.drawer-h h3{font-size:16px;font-weight:600}
+.modal-b,.drawer-b{padding:24px}
+.modal-f,.drawer-f{padding:16px 24px;border-top:1px solid var(--line)}
+.drawer{box-shadow:var(--shadow-modal)}
+.drawer-b{background:var(--page)}
+.drawer-b .card{padding:20px}
+/* home */
+.balance{background:linear-gradient(135deg,var(--blue-600),var(--blue-900));border-radius:12px}
+.balance .amt{font-family:"Space Grotesk",Inter,sans-serif;font-weight:600;font-size:36px}
+.balance .btn{height:36px;padding:0 12px;font-size:13px}
+.qa{gap:12px}
+.qa button{border-color:var(--line);border-radius:12px;padding:18px 10px;box-shadow:var(--shadow-card);font-weight:500}
+.strip{border-radius:12px;padding:16px 20px}
+/* prototype controls: smaller */
+.proto-btn{height:36px;padding:0 14px;font-size:12px;background:var(--sb);right:16px;bottom:16px}
+/* new payment: form plus progress rail */
+.np-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+.np-rail{position:sticky;top:88px}
+.np-rail .card{padding:20px}
+.np-steps{display:grid;gap:4px;margin:4px 0 16px}
+.np-step{display:flex;align-items:center;gap:12px;padding:6px 0;font-size:13px;color:var(--g500)}
+.np-step .ix{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:none;font-family:"Space Grotesk",Inter,sans-serif;font-size:12px;font-weight:600;background:var(--g100);color:var(--g500)}
+.np-step.done{color:var(--g800)}
+.np-step.done .ix{background:var(--green600);color:#fff}
+.np-step.cur{color:var(--g800);font-weight:600}
+.np-step.cur .ix{background:var(--blue-600);color:#fff}
+.np-sum{border-top:1px solid var(--line);padding-top:12px}
+.np-sum .kv{padding:6px 0;font-size:13px}
+@media (min-width:1101px){.np-bottom{display:none!important}}
+@media (max-width:1100px){.np-grid{grid-template-columns:1fr}.np-rail{display:none}}
+@media (max-width:860px){
+  .side{position:fixed;left:0;top:0;z-index:30;height:100vh;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--shadow-modal)}
+  .side.open{transform:none}
+  .phead{padding:20px 16px}
+  .main{padding:20px 16px 80px}
+  .ribbon{height:auto;padding:6px 12px;flex-wrap:wrap;gap:6px}
+}
 </style>
 </head>
 <body>
+
+<div class="app">
+<aside class="side"><div class="side-head"><a href="#home" class="brand">botim <span class="pill">business</span></a></div><nav class="nav" id="nav"></nav><div class="side-foot" id="sideFoot"></div></aside>
+<div class="col">
 <div class="ribbon"><span><b>Prototype</b> · B2B international payments · all names, rates, fees and delivery times are sample data</span><span class="rb-sw" id="modeSw"></span></div>
 <header class="top">
   <button class="menu-btn" onclick="document.querySelector('.side').classList.toggle('open')" aria-label="Menu">
@@ -365,9 +543,9 @@ body.hide-dec .decision{display:none}
   </div>
   <div class="dd" id="bell"></div>
 </header>
-<div class="wrap">
-  <aside class="side"><nav class="nav" id="nav"></nav></aside>
+<div class="phead" id="phead"></div>
   <main class="main"><div class="page" id="view"></div></main>
+</div>
 </div>
 
 <div class="drawer-wrap" id="drawer" onclick="if(event.target===this)closeDrawer()"></div>
@@ -543,26 +721,28 @@ const pendingCount = () => isAdmin()? approvalItems().filter(i=>i.status==='pend
 /* ================= shell ================= */
 function renderNav(route){
   const r0 = route.split('/')[0]; const r = r0==='payments'?'intl':r0;
-  const a = (href,label,extra='',cls='') => `<a href="${href}" class="${cls} ${r===href.slice(1).split('/')[0]?'active':''}">${label}${extra}</a>`;
+  const NI={home:'<path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',txn:'<path d="M4 7h16M4 12h16M4 17h10"/>',inv:'<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/>',link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',qr:'<rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M14 14h2v2h-2zM18 18h2v2h-2z"/>',send:'<path d="M5 12h14M13 6l6 6-6 6"/>',globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',pay:'<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/>',doc:'<path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h4"/>',store:'<path d="M4 9h16l-1-5H5z"/><path d="M5 9v11h14V9"/>',check:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>',cog:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>',flask:'<path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.7 3h10.6a2 2 0 0 0 1.7-3l-5-9V3"/>'};
+  const icn = k => `<span class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${NI[k]}</svg></span>`;
+  const a = (href,label,extra='',cls='',ik='') => `<a href="${href}" class="${cls} ${r===href.slice(1).split('/')[0]?'active':''}">${ik?icn(ik):''}<span>${label}</span>${extra}</a>`;
+  const inIntl=['intl','invoices','beneficiaries','pay','ben-new','ben','txn','pay-done'].includes(r);
   const tasks = pendingCount();
   $('#nav').innerHTML = `
-    ${a('#home','Home')}
-    ${a('#transactions','Transactions')}
-    <div class="nav-group">Collect money</div>
-    <a href="javascript:soon()">Invoice</a><a href="javascript:soon()">Paylink</a><a href="javascript:soon()">Smart code</a>
-    <div class="nav-group">Send money</div>
-    ${a('#send','Transfer')}
-    ${a('#intl','International payments',S.disabled?`<span class="lock">${ic.lock}</span>`:'<span class="new">New</span>')}
-    ${!S.disabled?a('#invoices','Supplier invoices','','sub')+a('#beneficiaries','Beneficiaries','','sub'):''}
-    <div class="nav-group">Business</div>
-    <a href="javascript:soon()">Payroll (WPS)</a>
-    <a href="javascript:soon()">Statements</a>
-    <a href="javascript:soon()">Offline business</a>
-    <div class="nav-group">Manage</div>
-    ${a('#approvals','Approvals',tasks?`<span class="count">${tasks}</span>`:'')}
-    <a href="javascript:soon()">Settings</a>
-    <div class="nav-group">Prototype</div>
-    ${a('#scenarios','Edge cases and states')}`;
+    ${a('#home','Home','','','home')}
+    ${a('#transactions','Transactions','','','txn')}
+    <div class="nav-group">COLLECT MONEY</div>
+    <a href="javascript:soon()">${icn('inv')}<span>Invoice</span></a><a href="javascript:soon()">${icn('link')}<span>Paylink</span></a><a href="javascript:soon()">${icn('qr')}<span>Smart code</span></a>
+    <div class="nav-group">SEND MONEY</div>
+    ${a('#send','Transfer','','','send')}
+    ${a('#intl','International payments',S.disabled?`<span class="lock">${ic.lock}</span>`:'<span class="new">New</span>',inIntl&&!['invoices','beneficiaries'].includes(r)?'active':'','globe')}
+    ${!S.disabled&&inIntl?a('#invoices','Supplier invoices','','sub')+a('#beneficiaries','Beneficiaries','','sub'):''}
+    <div class="nav-group">BUSINESS</div>
+    <a href="javascript:soon()">${icn('pay')}<span>Payroll (WPS)</span></a>
+    <a href="javascript:soon()">${icn('doc')}<span>Statements</span></a>
+    <a href="javascript:soon()">${icn('store')}<span>Offline business</span></a>
+    <div class="nav-group">MANAGE</div>
+    ${a('#approvals','Approvals',tasks?`<span class="count">${tasks}</span>`:'','','check')}
+    <a href="javascript:soon()">${icn('cog')}<span>Settings</span></a>`;
+  $('#sideFoot').innerHTML = a('#scenarios','Prototype: edge cases and states','','','flask');
   $('#modeSw').innerHTML=`<span class="lb">View as</span><button class="${S.mode!=='first'?'on':''}" onclick="setMode('returning')">Returning business</button><button class="${S.mode==='first'?'on':''}" onclick="setMode('first')">First-time business</button>`;
   const u=me(); $('#whoAv').textContent=u.init; $('#whoName').textContent=u.name; $('#whoRole').textContent=u.role;
   const unread = S.notif[S.persona].filter(n=>!n.read).length;
@@ -620,12 +800,23 @@ function render(){
     pay:()=>vPay(a), 'pay-done':()=>vPayDone(a), approvals:vApprovals,
     'ben-new':()=>vBenNew(), ben:()=>vBen(a), txn:()=>vTxn(a), scenarios:vScenarios
   }[r] || vHome)();
-  $('#view').innerHTML = html;
+  $('#view').innerHTML = html; liftHead();
   if(!keepScroll) window.scrollTo(0,0); keepScroll=false;
   if(after){ const f=after; after=null; f(); }
   if(S.drawer) renderDrawer();
 }
 let keepScroll=false;
+function liftHead(){
+  const v=$('#view'), ph=$('#phead'); const box=document.createElement('div'); box.className='phead-in'; let tabs=false;
+  while(v.firstElementChild){
+    const el=v.firstElementChild;
+    const isHead = el.matches('.crumbs, h1, p.sub-title') || (el.matches('.row') && el.querySelector('h1'));
+    const isTabs = el.matches('.tabs') && box.children.length;
+    if(isHead||isTabs){ box.appendChild(el); if(isTabs){ tabs=true; break; } } else break;
+  }
+  ph.innerHTML=''; ph.classList.toggle('has-tabs',tabs);
+  if(box.children.length) ph.appendChild(box);
+}
 window.addEventListener('hashchange',()=>{ if(!location.hash.startsWith('#approvals')) closeDrawer(true); render(); });
 
 /* ================= HOME ================= */
@@ -956,7 +1147,7 @@ function vPay(step){
   const list=d.lockBen? [b] : S.beneficiaries.filter(x=>x.cc===d.cc);
   const invs=b?S.invoices.filter(i=>i.ben===b.id&&i.status!=='paid'):[];
   const P=PURPOSES[d.purpose]; const sugg=P.docs.map(x=>x[0].toLowerCase()).join(', ');
-  return head+`<div style="max-width:760px">
+  return head+`<div class="np-grid"><div>
   ${d.amtSum&&parseFloat(d.recv)>0?amtSummary(c):`<div class="card">
     <h2><span class="stepn">1</span> Amount</h2>
     <div class="calc">
@@ -997,8 +1188,8 @@ function vPay(step){
     <div class="small muted mt8">Documents you add here are saved with the invoice, so you won't need them again for the rest of it.</div>
   </div>
 `:''}
-  <div class="row mt24" style="justify-content:flex-end"><a class="btn btn-secondary" href="#intl">Cancel</a><button class="btn btn-primary btn-lg" id="nPay" ${payReady()?'':'disabled'} onclick="location.hash='#pay/2'">Review payment</button></div>
-  </div>`;
+  <div class="row mt24 np-bottom" style="justify-content:flex-end"><a class="btn btn-secondary" href="#intl">Cancel</a><button class="btn btn-primary btn-lg" id="nPay" ${payReady()?'':'disabled'} onclick="location.hash='#pay/2'">Review payment</button></div>
+  </div><aside class="np-rail" id="npRail">${npRail()}</aside></div>`;
 }
 const invDocs = () => { const d=S.draft; const i=d.invId&&S.invoices.find(x=>x.id===d.invId); return (i&&i.docs)||[]; };
 function addOtherDoc(){ const d=S.draft; const names=PURPOSES[d.purpose].docs.map(x=>x[0].toLowerCase().replace(/[^a-z]+/g,'-')+'.pdf'); d.other.push(names[d.other.length]||'supporting-document-'+(d.other.length+1)+'.pdf'); keepScroll=true; render(); }
@@ -1006,7 +1197,15 @@ function addOtherDoc(){ const d=S.draft; const names=PURPOSES[d.purpose].docs.ma
 function pickBen(id){ Object.assign(S.draft,{ben:id,invNew:false,showAllInv:false,invId:null,invNo:'',invFile:false,other:[]}); if(!S.invoices.some(i=>i.ben===id&&i.status!=='paid')) S.draft.invNew=true; keepScroll=true; render(); }
 
 
-function payCheck(){ const n=$('#nPay'); if(n) n.disabled=!payReady(); }
+function payCheck(){ const n=$('#nPay'); if(n) n.disabled=!payReady(); const r=$('#npRail'); if(r) r.innerHTML=npRail(); }
+function npRail(){
+  const d=S.draft; if(!d) return ''; const c=CORRIDORS[d.cc]; const b=d.ben?ben(d.ben):null; const amt=(parseFloat(d.recv)||0)>0;
+  const st=[['Amount',amt],['Pay with',amt],['Beneficiary',!!(b&&b.status==='active')],['Invoice',!!(b&&b.status==='active'&&invOk())],['Purpose and documents',payReady()]];
+  let cur=st.findIndex(x=>!x[1]); if(cur<0) cur=st.length;
+  return `<div class="card"><h3 style="margin-bottom:4px">Your payment</h3><div class="np-steps">${st.map(([t,ok],i)=>`<div class="np-step ${ok?'done':i===cur?'cur':''}"><span class="ix">${ok?'✓':i+1}</span>${t}</div>`).join('')}</div>
+    <div class="np-sum"><div class="kv"><span class="k">${b?b.nick:'Supplier'} receives</span><span class="v num">${money(parseFloat(d.recv)||0,c.cur)}</span></div><div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${S.rates[d.cc].toFixed(4)}</span></div><div class="kv total"><span class="k">Total</span><span class="v">${money(dTot())}</span></div><div class="small muted">Indicative. Fixed when your Admin approves.</div></div>
+    <button class="btn btn-primary btn-block mt16" ${payReady()?'':'disabled'} onclick="location.hash='#pay/2'">Review payment</button><a class="btn btn-ghost btn-block mt8" href="#intl">Cancel</a></div>`;
+}
 
 function pickCountry(k){ const d=S.draft; if(d.cc!==k){ Object.assign(d,{ben:null,invId:null,invNo:'',invNew:false,invFile:false,other:[]}); d.cc=k; if(d.last==='recv'){ d.last='send'; } calcDraft(); } keepScroll=true; render(); }
 function refreshAmt(){ const t=$('#totTxt'); if(t) t.textContent=money(dTot()); const bb=$('#balBox'); if(bb) bb.innerHTML=balLine(); payCheck(); }
@@ -1111,7 +1310,7 @@ function vApprovals(){
   const stTag={pending:'<span class="tag t-yellow">Pending</span>',approved:'<span class="tag t-green">Approved</span>',rejected:'<span class="tag t-red">Rejected</span>',expired:'<span class="tag t-gray">Expired</span>',withdrawn:'<span class="tag t-gray">Withdrawn</span>'};
   const pendN=approvalItems().filter(i=>i.status==='pending'&&(i.by!=='admin'||i.kind==='pay')).length;
   return `<h1>Approvals</h1><p class="sub-title">Requests from your team across all products.</p>
-  <div class="seg" style="max-width:380px"><button class="${tab==='auth'?'on':''}" onclick="S.apTab='auth';render()">My authorizations${isAdmin()&&pendN?` (${pendN})`:''}</button><button class="${tab==='req'?'on':''}" onclick="S.apTab='req';render()">My requests</button></div>
+  <div class="tabs"><button class="${tab==='auth'?'on':''}" onclick="S.apTab='auth';render()">My authorizations${isAdmin()&&pendN?` <span class="c">${pendN}</span>`:''}</button><button class="${tab==='req'?'on':''}" onclick="S.apTab='req';render()">My requests</button></div>
   ${tab==='auth'&&!isAdmin()?`<div class="alert a-info mb16"><span class="ic">${ic.info}</span><div>Only Admins authorize requests. Your requests are in My requests.</div></div>`:''}
   <div class="card mb16"><div class="filters">
     <div><label class="f">Date range</label><input class="input" value="01 Oct 2026 to 29 Oct 2026" readonly></div>
