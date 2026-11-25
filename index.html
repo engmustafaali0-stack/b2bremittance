@@ -1020,7 +1020,7 @@ function calcCard(){
   const tot=parseFloat(k.send)>0?parseFloat(k.send)+feeDue(c.cur,0):0;
   return `<div class="row between mb16" style="align-items:flex-start"><div><h2 style="margin:0">New transfer</h2><div class="small muted">Today's rate, fee and total, before you pick a supplier.</div></div><span class="tag t-blue">6 countries</span></div>
     <div class="calc">
-      <div class="cside"><div class="row between"><div class="lbl">You send</div><div class="small muted">Balance ${money(S.balance)}</div></div><div class="in"><span class="cur">🇦🇪 AED</span><input id="cSend" style="text-align:right" inputmode="decimal" autocomplete="off" placeholder="0.00" value="${k.send}" oninput="calcIn('send',this.value)"></div></div>
+      <div class="cside"><div class="row between"><div class="lbl">You send</div><div class="small muted"></div></div><div class="in"><span class="cur">🇦🇪 AED</span><input id="cSend" style="text-align:right" inputmode="decimal" autocomplete="off" placeholder="0.00" value="${k.send}" oninput="calcIn('send',this.value)"></div></div>
       <div class="mid"><span class="rate-pill">1 AED = <span class="num">${r.toFixed(4)}</span> ${c.cur}</span><span>Fee ${money(feeFor(c.cur))} + VAT ${money(vatFor(c.cur))} · Total <b class="num" id="cTot">${money(tot)}</b></span></div>
       <div class="cside"><div class="lbl">They receive</div><div class="in">
         <select class="input" id="cCur" style="width:auto;height:40px;font-weight:700" onchange="calcCur(this.value)">${Object.entries(CORRIDORS).map(([kk,x])=>{const off=S.pausedCorridor===kk;return `<option value="${kk}" ${k.cc===kk?'selected':''} ${off?'disabled':''}>${x.flag} ${x.cur} · ${x.name}${off?' (paused)':''}</option>`}).join('')}</select>
@@ -1170,14 +1170,14 @@ function calcDraft(){
 const dAmt = () => parseFloat(S.draft.send)||0;
 const dTot = () => { const a=dAmt(); return a&&S.draft.cc? a+feeDue(CORRIDORS[S.draft.cc].cur,S.draft.disc||0):0; };
 function shortfallOptions(need){
-  return `<div class="card mt16" style="border-color:var(--red600)"><div class="row" style="gap:10px;align-items:flex-start;color:#7F1D1D"><span>${ic.warn}</span><div><b>Not enough balance.</b> You need about ${nm(need)} more. Add money to continue:</div></div>
+  return `<div class="card mt16" style="border-color:var(--red600)"><div class="row" style="gap:10px;align-items:flex-start;color:#7F1D1D"><span>${ic.warn}</span><div><b>Your balance isn't enough for this payment yet.</b> Add money to your account, then try again.</div></div>
     <div class="grid mt16" style="gap:8px">
       <button class="choice" onclick="topUp()"><div class="row between"><div><div class="t">Bank transfer to your botim IBAN</div><div class="s">From any UAE bank. Usually arrives within minutes.</div></div>${ic.arrow}</div></button>
       <button class="choice" onclick="cardTopUp(${need})"><div class="row between"><div><div class="t">Top up with a UAE debit card</div><div class="s">Instant top-up to your balance</div></div>${ic.arrow}</div></button>
       <button class="choice" onclick="toast('Opens the botim loan request journey (out of scope)')"><div class="row between"><div><div class="t">Get a botim business loan</div><div class="s">Request financing for this payment</div></div>${ic.arrow}</div></button>
     </div></div>`;
 }
-const balLine = () => { const t=dTot(); return t>S.balance ? shortfallOptions(Math.ceil((t-S.balance)*100)/100) : (t?`<div class="small mt8" style="color:var(--green600);display:flex;gap:6px;align-items:center">${ic.ok} Covered by your balance of ${money(S.balance)}</div>`:''); };
+const balLine = () => '';
 
 function invNoIn(v){ const was=invOk(); S.draft.invNo=v; if(invOk()!==was){ keepScroll=true; render(); const e=$('#invNoIn'); if(e){ e.focus(); e.setSelectionRange(e.value.length,e.value.length); } } else payCheck(); }
 function openNewInv(){ Object.assign(S.draft,{invNew:true,invId:null,invNo:'',invFile:false,other:[]}); keepScroll=true; render(); }
@@ -1307,7 +1307,7 @@ function quoteBlock(){
     <div class="kv"><span class="k">You send</span><span class="v">${nm(amt)}</span></div>
     <div class="kv"><span class="k">Fee</span><span class="v">${feeTxt(c.cur,d.disc)}</span></div>
     <div class="kv total"><span class="k">Total from balance</span><span class="v">${nm(dTot())}</span></div>
-    <div class="small muted">Your balance: ${nm(S.balance)}</div>`;
+`;
 }
 function vReview(){
   const d=S.draft; const c=CORRIDORS[d.cc]; const b=ben(d.ben); const amt=dAmt(); const tot=dTot();
@@ -1662,7 +1662,7 @@ const SCEN=[
   ['Cancelled','The checks didn\'t clear, or the business didn\'t send the requested details in time. The payment never reaches the Admin; no money was taken and no reason is given.',()=>{S.persona='maker';location.hash='#txn/IP-10234';},'Open'],
   ['Maker creates a payment','Starts on the International payments page: enter the amount and pick the currency, then beneficiary, invoice and purpose. Review and submit.',()=>{S.persona='maker';S.introSeen=true;location.hash='#intl';},'Start'],
   ['Pay from a supplier invoice','Choose an unpaid invoice and pay it; the supplier and invoice are filled in, you enter the amount.',()=>{S.persona='maker';S.introSeen=true;location.hash='#invoices';},'Open'],
-  ['Not enough money','Shortfall shown while typing, with three ways to add money.',()=>{S.persona='maker';S.balance=1200;S.introSeen=true;startPay('HK','B3');S.draft.lockBen=false;S.draft.send='5000';S.draft.last='send';calcDraft();},'Try it'],
+  ['Not enough money','At submit, the balance check says the balance isn\'t enough. No balance figure is shown in BizPay; the business sees ways to add money and Submit is blocked.',()=>{S.persona='maker';S.balance=1200;S.introSeen=true;startPay('HK','B3');S.draft.send='5000';S.draft.last='send';calcDraft();pickInv(S.invoices.find(i=>i.ben==='B3'&&i.status!=='paid').id);location.hash='#pay/2';},'Try it'],
   ['Rate refreshes before approval','The rate refresh is shortened to 10 seconds here so you can see it update.',()=>{S.persona='admin';S.quoteSecs=10;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open'],
   ['Approval request expired','Nobody approved in time. Shown as Expired; no money taken.',()=>{location.hash='#txn/IP-10236';},'Open'],
   ['Documents required','Before the payment goes to the Admin, the business has 5 hours to upload documents. After upload it moves to Documents under review, then to Pending approval.',()=>{S.persona='maker';location.hash='#txn/IP-10238';},'Open'],
