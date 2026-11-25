@@ -443,14 +443,16 @@ function seed(){
       {id:'I5',ben:'B1',no:'HT-2026-1102',cur:'CNY',due:'10 Oct 2026',status:'paid',src:'Uploaded by supplier'}
     ],
     payments:[
-      {id:'IP-10241',ben:'B1',aed:25984.96,recvAmt:50440,rate:1.9412,status:'awaiting',by:'maker',at:'29 Oct, 12:50',expires:'30 Oct, 12:50',purpose:'goods',inv:'HT-2026-1187',invCur:'CNY',sof:'Company funds',docs:['HT-2026-1187.pdf','bill-of-lading-OCT.pdf'],ref:'HT-2026-1187'},
+      {id:'IP-10241',ben:'B1',aed:25984.96,recvAmt:50440,rate:1.9412,status:'awaiting',by:'maker',at:'29 Oct, 12:41',orderAt:'29 Oct, 12:50',expires:'30 Oct, 12:50',purpose:'goods',inv:'HT-2026-1187',invCur:'CNY',sof:'Company funds',docs:['HT-2026-1187.pdf','bill-of-lading-OCT.pdf'],ref:'HT-2026-1187'},
       {id:'IP-10240',ben:'B2',aed:5200,recvAmt:118000,rate:22.6923,status:'completed',by:'admin',at:'28 Oct, 10:05',sentAt:'28 Oct, 10:06',done:'28 Oct, 14:32',purpose:'goods',inv:'MT/26-27/0401',invCur:'INR',sof:'Company funds',payRef:'B2B-K9P2-0240',docs:['MT-0401.pdf']},
       {id:'IP-10231',ben:'B1',aed:18500,rate:1.9387,status:'completed',by:'admin',at:'14 Oct, 09:12',sentAt:'14 Oct, 09:13',done:'14 Oct, 16:40',purpose:'goods',inv:'HT-2026-1102',invCur:'CNY',sof:'Company funds',payRef:'B2B-77Q4-1031',docs:['HT-2026-1102.pdf']},
       {id:'IP-10235',ben:'B2',aed:7200,rate:22.701,status:'sent',by:'maker',approvedBy:'admin',approvedAt:'28 Oct, 15:20',at:'28 Oct, 15:05',sentAt:'28 Oct, 15:21',purpose:'goods',inv:'MT/26-27/0388',invCur:'INR',sof:'Company funds',docs:['MT-0388.pdf']},
-      {id:'IP-10238',ben:'B3',aed:12000,rate:2.1179,status:'pending_info',by:'maker',approvedBy:'admin',approvedAt:plusH(-1),at:plusH(-1.5),infoAt:plusH(-0.5),infoDue:plusH(4.5),purpose:'logistics',inv:'KP-88102',invCur:'HKD',sof:'Company funds',docs:['KP-88102.pdf']},
-      {id:'IP-10237',ben:'B4',aed:15600,rate:9.376,status:'review',by:'admin',at:'27 Oct, 18:10',sentAt:'27 Oct, 18:11',infoSent:'28 Oct, 09:30',purpose:'goods',inv:'AC-5560',invCur:'TRY',sof:'Trade finance proceeds',docs:['AC-5560.pdf']},
+      {id:'IP-10238',ben:'B3',aed:12000,rate:2.1179,status:'pending_info',by:'maker',at:plusH(-1.5),infoAt:plusH(-0.5),infoDue:plusH(4.5),purpose:'logistics',inv:'KP-88102',invCur:'HKD',sof:'Company funds',docs:['KP-88102.pdf']},
+      {id:'IP-10237',ben:'B4',aed:15600,rate:9.376,status:'review',by:'admin',at:'27 Oct, 18:10',infoSent:'28 Oct, 09:30',purpose:'goods',inv:'AC-5560',invCur:'TRY',sof:'Trade finance proceeds',docs:['AC-5560.pdf']},
       {id:'IP-10239',ben:'B4',aed:9800,rate:9.371,status:'failed',fail:'notcompleted',by:'admin',at:'24 Oct, 10:03',sentAt:'24 Oct, 10:04',failAt:'25 Oct, 09:30',purpose:'goods',inv:'AC-5521',invCur:'TRY',sof:'Company funds',docs:['AC-5521.pdf']},
       {id:'IP-10233',ben:'B5',aed:22000,rate:0.2338,status:'failed',fail:'returned',by:'admin',at:'16 Oct, 13:40',sentAt:'16 Oct, 13:41',done:'17 Oct, 10:15',failAt:'21 Oct, 14:02',purpose:'goods',inv:'RW-2026-3204',invCur:'EUR',sof:'Company funds',returnReason:'The beneficiary account is closed',docs:['RW-3204.pdf']},
+      {id:'IP-10242',ben:'B3',aed:6100,rate:2.1182,status:'checking',by:'maker',at:plusH(-0.05),purpose:'goods',inv:'KP-88231',invCur:'HKD',sof:'Company funds',docs:['KP-88231.pdf']},
+      {id:'IP-10234',ben:'B2',aed:3900,rate:22.69,status:'notprocessed',by:'maker',at:'22 Oct, 11:20',failAt:'22 Oct, 13:05',purpose:'goods',inv:'MT/26-27/0377',invCur:'INR',sof:'Company funds',docs:['MT-0377.pdf']},
       {id:'IP-10236',ben:'B3',aed:4300,rate:2.1182,status:'expired',by:'maker',at:'25 Oct, 17:22',failAt:'26 Oct, 17:22',purpose:'goods',inv:'KP-88160',invCur:'HKD',sof:'Company funds',docs:['KP-88160.pdf']}
     ],
     otherApprovals:[
@@ -493,7 +495,7 @@ const etaOf = b => methodOf(b).eta;
 const benFields = b => b.vals ? FIELDS[b.cc+'_'+b.method].map(([l],i)=>[l,b.vals[i]]) : (b.fields?FIELDS[b.fields].map(([l,ex])=>[l,ex]):[['Registered company name',b.name]]);
 const cpvHtml = b => { const v=b.cpv; if(!v) return ''; const map={match:['t-green','Name matches'],close:['t-yellow','Close match'],nomatch:['t-red','Name doesn\'t match'],na:['t-gray','Not available for this bank']};
   return `<div class="kv"><span class="k">Name at the bank</span><span class="v">${v.name?`<span class="num">${v.name}</span><br>`:''}<span class="tag ${map[v.status][0]}">${map[v.status][1]}</span></span></div>`; };
-function benFull(b){ const c=CORRIDORS[b.cc]; const ch=b.changed?b.changed.old:{};
+function benFull(b,plain){ const c=CORRIDORS[b.cc]; const ch=(b.changed&&!plain)?b.changed.old:{};
   return `<div class="kv"><span class="k">Country and method</span><span class="v">${c.flag} ${c.name} · ${methodOf(b).name}</span></div>`+
    benFields(b).map(([l,v])=>`<div class="kv" ${ch[l]?'style="background:var(--yellow50);border-radius:6px;padding-left:6px;padding-right:6px"':''}><span class="k">${l}${ch[l]?' <span class="tag t-yellow" style="padding:1px 6px">Changed</span>':''}</span><span class="v num">${v}</span></div>`).join('')+cpvHtml(b)+
    `<div class="kv"><span class="k">Estimated delivery</span><span class="v">${etaOf(b)}</span></div>`+
@@ -518,7 +520,7 @@ const ic = {
   user:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>'
 };
 const STATUS = {
-  awaiting:['Submitted for Admin approval','t-yellow'], processing:['Processing','t-blue'], sent:['Money sent','t-blue'], pending_info:['Pending additional details','t-red'],
+  checking:['Being checked','t-yellow'], notprocessed:['Not processed','t-gray'], awaiting:['Pending approval','t-yellow'], processing:['Processing','t-blue'], sent:['Money sent','t-blue'], pending_info:['Pending additional details','t-red'],
   review:['Under review','t-yellow'], completed:['Completed','t-green'], failed:['Failed','t-gray'], rejected:['Rejected by Admin','t-gray'], expired:['Expired','t-gray'], withdrawn:['Withdrawn','t-gray']
 };
 const tag = s => `<span class="tag ${STATUS[s][1]}">${STATUS[s][0]}</span>`;
@@ -527,7 +529,8 @@ const btag = b => `<span class="tag ${BSTATUS[b.status][1]}">${b.status==='cooli
 
 /* ================= approvals (generic module) ================= */
 function approvalItems(){
-  const pays = S.payments.filter(p=>p.by==='maker'||p.approvedBy).filter(p=>!(p.status==='failed'&&p.fail==='notcompleted'&&!p.approvedBy)).map(p=>{
+  const PRE=['checking','pending_info','review','notprocessed'];
+  const pays = S.payments.filter(p=>!PRE.includes(p.status)&&!(p.status==='withdrawn'&&!p.orderAt)).filter(p=>p.by==='maker'||p.approvedBy||p.orderAt).filter(p=>!(p.status==='failed'&&p.fail==='notcompleted'&&!p.approvedBy)).map(p=>{
     const st = p.status==='awaiting'?'pending':['expired','rejected','withdrawn'].includes(p.status)?p.status:'approved';
     return {id:p.id,kind:'pay',type:'International payment',summary:`${money(total(p))} to ${ben(p.ben).nick}`,by:p.by,at:p.at,status:st,checker:st==='approved'||st==='rejected'?'admin':null,checkAt:p.approvedAt||p.failAt||'',remark:p.rejectReason||''};
   });
@@ -535,7 +538,7 @@ function approvalItems(){
   const other = S.otherApprovals.map(o=>({...o,kind:'other',status:o.status}));
   return [...pays,...bens,...other];
 }
-const pendingCount = () => isAdmin()? approvalItems().filter(i=>i.status==='pending'&&i.by!=='admin').length : 0;
+const pendingCount = () => isAdmin()? approvalItems().filter(i=>i.status==='pending'&&(i.by!=='admin'||i.kind==='pay')).length : 0;
 
 /* ================= shell ================= */
 function renderNav(route){
@@ -706,7 +709,7 @@ function vIntl(){
   const pays = S.payments.slice().sort((x,y)=>x.id<y.id?1:-1);
   const fresh = !S.payments.length;
   const due=S.invoices.filter(i=>i.status!=='paid').sort((x,y)=>(x.status==='overdue'?0:1)-(y.status==='overdue'?0:1));
-  const inProg=S.payments.filter(p=>['awaiting','processing','sent','pending_info','review'].includes(p.status)).length;
+  const inProg=S.payments.filter(p=>['checking','awaiting','processing','sent','pending_info','review'].includes(p.status)).length;
   const invPanel = `<div class="card inv-panel" style="align-self:start"><div class="row between mb8"><h3 style="margin:0">Invoices to pay</h3>${due.length?`<a href="#invoices" class="small">View all</a>`:''}</div>
       ${due.length?due.slice(0,4).map(i=>{const b=ben(i.ben);const c=CORRIDORS[b.cc];return `<div class="mini-inv"><span class="flag">${c.flag}</span><div class="li-main"><div class="t" style="font-size:13px">${b.nick}</div><div class="s num">${i.no}</div><div class="s">${i.status==='overdue'?'<span style="color:var(--red600);font-weight:600">Overdue</span> · ':''}Due ${i.due}</div></div><button class="btn btn-sm btn-primary" onclick="payInvoice('${i.id}')">Pay</button></div>`}).join('')+(due.length>4?`<a href="#invoices" class="small">+ ${due.length-4} more</a>`:'')
       :`<div class="empty-mini"><div class="li-ic" style="margin:0 auto 8px">${ic.file}</div><div style="font-weight:600">No invoices yet</div><div class="small muted mt8">Add your suppliers' invoices here, or ask a supplier to upload one, so they're ready when you pay.</div>
@@ -803,7 +806,7 @@ function vBens(){
   <div class="card" style="padding:8px 8px 0"><div class="table-wrap"><table>
   <thead><tr><th>Beneficiary</th><th>Country and method</th><th>Account</th><th>Estimated delivery</th><th>Status</th><th></th></tr></thead>
   <tbody>${S.beneficiaries.map(b=>{const c=CORRIDORS[b.cc];const m=methodOf(b);return `<tr class="click" onclick="location.hash='#ben/${b.id}'"><td><div style="font-weight:600">${b.nick}</div><div class="small muted">${b.name}</div></td><td><span class="flag">${c.flag}</span> ${c.name} · ${m.name}</td><td class="num">${b.bank}<br><span class="small muted">${b.acct}</span></td><td class="small">${m.eta}</td><td>${btag(b)}</td><td>${b.status==='active'?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();startPay('${b.cc}','${b.id}')">Pay</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>
-  <p class="small muted mt16">Changing a beneficiary's bank details goes through the same check as adding a new one, and is flagged to your Admin on the next payment.</p>`;
+  <p class="small muted mt16">Changing a beneficiary's bank details goes through the same check as adding a new one.</p>`;
 }
 
 /* ================= ADD BENEFICIARY ================= */
@@ -1051,8 +1054,8 @@ function vReview(){
       `<label class="f">Promo code</label><div class="row" style="gap:8px"><input class="input ${d.promoErr?'err':''}" id="promoIn" autocomplete="off" style="text-transform:uppercase" value="${d.promo}" placeholder="Enter code"><button class="btn btn-secondary" style="height:44px" onclick="applyPromo()">Apply</button></div>${d.promoErr?`<div class="help" style="color:var(--red600)">${d.promoErr}</div>`:''}<div class="row mt8" style="gap:6px;flex-wrap:wrap;align-items:center"><span class="small muted">Available offer:</span><button class="cc-btn" style="padding:4px 10px;font-size:12px" onclick="$('#promoIn').value='BIZFREE';applyPromo()">BIZFREE</button><span class="small muted">waives the transfer fee</span></div>`}
       <hr class="sep">
       ${short?`<div class="alert a-err"><span class="ic">${ic.warn}</span><div>Not enough balance for this payment.</div></div>`:''}
-      ${isAdmin()?`<button class="btn btn-primary btn-block btn-lg" ${short?'disabled':''} onclick="adminPayNow()">Pay now</button><p class="small muted mt8">You confirm with your password and OTP. The rate and AED total are fixed at that moment.</p>`:
-      `<button class="btn btn-primary btn-block btn-lg" ${short?'disabled':''} onclick="submitPay()">Submit for Admin approval</button><p class="small muted mt8">Nothing is taken from your balance until your Admin approves.</p>`}
+      ${isAdmin()?`<button class="btn btn-primary btn-block btn-lg" ${short?'disabled':''} onclick="adminPayNow()">Submit</button><p class="small muted mt8">We check a few details first. Then you approve it in My authorizations with your password and OTP, at the rate shown then.</p>`:
+      `<button class="btn btn-primary btn-block btn-lg" ${short?'disabled':''} onclick="submitPay()">Submit</button><p class="small muted mt8">We check a few details first, then it goes to your Admin. Nothing is taken from your balance until your Admin approves.</p>`}
     </div>${short?shortfallOptions(tot-S.balance):''}</div></div>`;
 }
 function applyPromo(){ const d=S.draft; const v=($('#promoIn').value||'').trim().toUpperCase(); d.promo=v; if(PROMOS[v]){ d.disc=PROMOS[v].off; d.promoErr=''; toast(PROMOS[v].label); } else { d.disc=0; d.promoErr=v?"This code isn't valid or has expired.":'Enter a code'; } keepScroll=true; render(); }
@@ -1066,12 +1069,24 @@ function newPayment(status){
   else { const ni={id:'I'+(S.invoices.length+1)+'x',ben:d.ben,no:d.invNo,cur:c.cur,due:'Not set',status:'unpaid',src:'Uploaded with a payment by '+USERS[S.persona].name,docs:[...d.other]}; S.invoices.push(ni); p.invId=ni.id; }
   S.payments.push(p); S.draft=null; S.calc=null; return p;
 }
-function submitPay(){ const p=newPayment('awaiting'); notify('admin','Payment waiting for your approval',`${USERS[p.by].name} submitted ${money(total(p))} to ${ben(p.ben).nick}. Expires ${p.expires}.`,'approve:'+p.id); location.replace('#pay-done/'+p.id); }
-function adminPayNow(){ otpFlow('Confirm payment',()=>{ const p=newPayment('awaiting'); executePay(p); location.replace('#txn/'+p.id); toast('Paid. Your payment is on its way.'); }); }
+function submitPay(){ const p=newPayment('checking'); p.expires=null; location.replace('#pay-done/'+p.id); screenPay(p); }
+function adminPayNow(){ submitPay(); }
+function rerenderIf(p){ if(location.hash==='#txn/'+p.id||location.hash==='#pay-done/'+p.id||location.hash==='#approvals'||location.hash==='#intl'){ keepScroll=true; render(); } }
+function screenPay(p){
+  setTimeout(()=>{
+    if(p.status!=='checking') return;
+    if(S.forcePayInfo){ S.forcePayInfo=false; p.status='pending_info'; p.infoAt=now(); p.infoDue=plusH(5); notify(p.by,'More details needed',`We need a few more details for ${p.id}. Please upload them by ${p.infoDue}.`,'#txn/'+p.id); }
+    else if(S.forcePayFail){ S.forcePayFail=false; notProcessed(p); }
+    else clearPay(p);
+    rerenderIf(p);
+  },3000);
+}
+function clearPay(p){ p.status='awaiting'; p.orderAt=now(); p.expires=plusH(24); notify('admin','Payment waiting for your approval',`${USERS[p.by].name} submitted ${money(total(p))} to ${ben(p.ben).nick}. Expires ${p.expires}.`,'approve:'+p.id); }
+function notProcessed(p){ p.status='notprocessed'; p.failAt=now(); notify(p.by,'Payment not processed',`We couldn't process ${p.id}. No money was taken. Please contact support.`,'#txn/'+p.id); }
 function vPayDone(id){
   const p=pay(id); const b=ben(p.ben);
   return `<div style="max-width:560px;margin:40px auto;text-align:center"><div class="tag t-yellow" style="width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center">${ic.info}</div>
-  <h1>Sent to Admin for approval</h1><p class="muted">Nothing has been taken from your balance yet. The request expires on ${p.expires}. We'll let you know when it's approved.</p>
+  <h1>Submitted</h1><p class="muted">We're checking a few details first. Then it goes ${p.by==='admin'?'to My authorizations for your approval':'to your Admin for approval'}. Nothing has been taken from your balance.</p>
   <div class="card mt16" style="text-align:left"><div class="kv"><span class="k">Reference</span><span class="v num">${p.id}</span></div><div class="kv"><span class="k">To</span><span class="v">${b.nick}</span></div><div class="kv"><span class="k">Total from balance</span><span class="v">${nm(total(p))}</span></div></div>
   <div class="row mt24" style="justify-content:center"><a class="btn btn-secondary" href="#txn/${p.id}">Track this payment</a><a class="btn btn-primary" href="#intl">Done</a></div></div>`;
 }
@@ -1088,13 +1103,13 @@ function executePay(p,rate){
 function vApprovals(){
   const tab = S.apTab || (isAdmin()?'auth':'req');
   let list=approvalItems();
-  list = tab==='auth' ? (isAdmin()? list.filter(i=>i.by!=='admin') : []) : list.filter(i=>i.by===S.persona);
+  list = tab==='auth' ? (isAdmin()? list.filter(i=>i.by!=='admin'||i.kind==='pay') : []) : list.filter(i=>i.by===S.persona);
   const F=S.apFilter;
   if(F.type!=='all') list=list.filter(i=>i.type===F.type);
   if(F.status!=='all') list=list.filter(i=>i.status===F.status);
   list.sort((a,b)=>(a.status==='pending'?0:1)-(b.status==='pending'?0:1));
   const stTag={pending:'<span class="tag t-yellow">Pending</span>',approved:'<span class="tag t-green">Approved</span>',rejected:'<span class="tag t-red">Rejected</span>',expired:'<span class="tag t-gray">Expired</span>',withdrawn:'<span class="tag t-gray">Withdrawn</span>'};
-  const pendN=approvalItems().filter(i=>i.status==='pending'&&i.by!=='admin').length;
+  const pendN=approvalItems().filter(i=>i.status==='pending'&&(i.by!=='admin'||i.kind==='pay')).length;
   return `<h1>Approvals</h1><p class="sub-title">Requests from your team across all products.</p>
   <div class="seg" style="max-width:380px"><button class="${tab==='auth'?'on':''}" onclick="S.apTab='auth';render()">My authorizations${isAdmin()&&pendN?` (${pendN})`:''}</button><button class="${tab==='req'?'on':''}" onclick="S.apTab='req';render()">My requests</button></div>
   ${tab==='auth'&&!isAdmin()?`<div class="alert a-info mb16"><span class="ic">${ic.info}</span><div>Only Admins authorize requests. Your requests are in My requests.</div></div>`:''}
@@ -1113,28 +1128,18 @@ function vApprovals(){
       <td>${i.checker?USERS[i.checker].name:''}</td><td class="small">${i.checkAt||''}</td></tr>`).join(''):'<tr><td colspan="9"><div class="empty">Nothing here.</div></td></tr>'}</tbody>
   </table></div></div>`;
 }
-function openDrawer(id){ S.drawer=id; S.dDecision=null; S.dRemark=''; S.dqLeft=S.quoteSecs; tick(); renderDrawer(); }
+function openDrawer(id){ S.drawer=id; S.dDecision=null; S.dRemark=''; S.dRateMoved=false; S.dqLeft=S.quoteSecs; tick(); renderDrawer(); }
 function closeDrawer(silent){ S.drawer=null; $('#drawer').classList.remove('open'); clearInterval(window._dq); }
 function renderDrawer(){
   const id=S.drawer; const item=approvalItems().find(i=>i.id===id); if(!item){ closeDrawer(); return; }
-  const canAct = item.status==='pending' && isAdmin() && item.by!=='admin';
+  const canAct = item.status==='pending' && isAdmin() && (item.by!=='admin'||item.kind==='pay');
   let body='';
   if(item.kind==='pay'){
     const p=pay(id); const b=ben(p.ben); const c=CORRIDORS[b.cc]; const fee=feeFor(c.cur);
     const r = item.status==='pending'? S.rates[b.cc] : p.rate; const tot=totalAt(p,r);
-    const flags=[];
-    if(item.status==='pending'){
-      if(!S.payments.some(x=>x.ben===p.ben&&x.status==='completed')) flags.push(['a-err',`<b>New beneficiary.</b> First payment to ${b.nick}, added by ${USERS[b.addedBy||'maker'].name}${b.addedAt?' on '+b.addedAt:''}. Confirm their bank details with the supplier before you authorize.`]);
-      if(b.cpv&&b.cpv.status==='nomatch') flags.push(['a-err',`<b>Name doesn't match.</b> The receiving bank has this account under "${b.cpv.name}", not "${b.name}".`]);
-      if(b.cpv&&b.cpv.status==='close') flags.push(['a-warn',`<b>Close name match.</b> The receiving bank has this account under "${b.cpv.name}". Check it's the same company.`]);
-      if(b.changed) flags.push(['a-err',`<b>Bank details changed</b> on ${b.changed.at} by ${USERS[b.changed.by].name}.<table class="mt8" style="font-size:12px"><tr><th style="padding:4px 6px"></th><th style="padding:4px 6px">Before</th><th style="padding:4px 6px">Now</th></tr>${Object.entries(b.changed.old).map(([l,v])=>`<tr><td style="padding:4px 6px">${l}</td><td class="num" style="padding:4px 6px">${v}</td><td class="num" style="padding:4px 6px;font-weight:700">${(benFields(b).find(x=>x[0]===l)||[,''])[1]}</td></tr>`).join('')}</table><div class="mt8">Confirm the change with the supplier using a phone number you already have, not one from an email.</div>`]);
-      if(S.payments.some(x=>x!==p&&x.inv===p.inv&&!['failed','rejected','expired','withdrawn'].includes(x.status))) flags.push(['a-err',`Invoice ${p.inv} was used in another payment. Check this isn't a duplicate.`]);
-      if(b.known===false) flags.push(['a-warn',`${USERS[b.addedBy||'maker'].first} said they don't know this beneficiary.`]);
-    }
     body=`
-      ${flags.map(([k,t])=>`<div class="alert ${k} mb16"><span class="ic">${ic.warn}</span><div>${t}</div></div>`).join('')}
-      <div class="card quote-live mb16" id="dq">${dQuote(p,r)}</div>
-      <div class="card mb16"><h3>Beneficiary</h3>${benFull(b)}</div>
+      <div class="card quote-live mb16" id="dq">${dQuote(p,r,S.dRateMoved)}</div>
+      <div class="card mb16"><h3>Beneficiary</h3>${benFull(b,true)}</div>
       <div class="card mb16"><div class="row between"><h3 style="margin:0">Invoice ${p.inv}</h3><button class="btn btn-sm btn-ghost" onclick="viewDoc('${p.inv.replace(/[^A-Za-z0-9-]/g,'')}.pdf')">View</button></div>
         <div class="doc mt8"><div class="row between"><b>${b.name}</b><span class="num">${p.inv}</span></div><div class="small muted">Commercial invoice · Bill to: Al Noor Trading LLC, Dubai</div><div class="line" style="width:90%"></div><div class="line" style="width:70%"></div></div>
         <div class="kv mt8"><span class="k">Purpose</span><span class="v">${PURPOSES[p.purpose].name}</span></div><div class="kv"><span class="k">Source of funds</span><span class="v">${p.sof}</span></div><div class="kv"><span class="k">Reference</span><span class="v">${p.ref||'None'}</span></div>
@@ -1163,7 +1168,7 @@ function renderDrawer(){
 function dQuote(p,r,refreshed){
   const b=ben(p.ben); const c=CORRIDORS[b.cc]; const fee=feeFor(c.cur); const tot=totalAt(p,r); const pend=p.status==='awaiting'; const sendA=aedAt(p,r);
   return `<div class="row between"><h3 style="margin:0">${pend?'Current rate':'Payment'}</h3>${pend?`<span class="small muted">Refreshes in <span class="countdown" id="dqcd">${mmss(S.dqLeft??S.quoteSecs)}</span></span>`:''}</div>
-    ${refreshed?`<div class="alert a-info mt8"><span class="ic">${ic.info}</span><div>The rate just refreshed. Check the amount before you authorize.</div></div>`:''}
+    ${refreshed?`<div class="alert a-info mt8"><span class="ic">${ic.info}</span><div>The rate has been updated. Please check the new total before you approve.</div></div>`:''}
     <div class="kv mt8"><span class="k">${b.nick} receives</span><span class="v" style="font-size:16px">${nm(p.recvAmt||p.aed*r,c.cur)}</span></div>
     <div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${r.toFixed(4)} ${c.cur}</span></div>
     <div class="kv"><span class="k">You send</span><span class="v">${nm(sendA)}</span></div>
@@ -1184,13 +1189,13 @@ function submitDecision(id){
   }
   if(item.kind==='pay'){ const p=pay(id); if(totalAt(p,S.rates[ben(p.ben).cc])>S.balance){ toast('Not enough balance'); return; } }
   otpFlow('Authorize request',()=>{
-    if(item.kind==='pay'){ const p=pay(id); executePay(p,S.rates[ben(p.ben).cc]); }
+    if(item.kind==='pay'){ const p=pay(id); if(S.forceRateMove){ S.forceRateMove=false; tick(); S.dqLeft=S.quoteSecs; S.dRateMoved=true; S.dDecision=null; renderDrawer(); toast('The rate changed. Check the new total and authorize again.'); return; } executePay(p,S.rates[ben(p.ben).cc]); }
     else if(item.kind==='ben'){ const b=ben(item.ref); b.approvedAt=now(); activateBen(b); notify(b.addedBy,'Beneficiary approved',b.status==='active'?`${b.nick} is ready to pay.`:`${b.nick} is approved. You can pay them from ${b.availFrom}.`,'#ben/'+b.id); }
     else { const o=S.otherApprovals.find(x=>x.id===id); o.status='approved'; o.checker='admin'; o.checkAt=now(); }
     S.dRemark=''; closeDrawer(); render(); toast('Authorized');
   });
 }
-function withdrawReq(id){ const p=pay(id); p.status='withdrawn'; p.failAt=now(); closeDrawer(); location.hash='#txn/'+id; render(); toast('Request withdrawn'); }
+function withdrawReq(id){ const p=pay(id); if(!['checking','pending_info','review','awaiting'].includes(p.status)) return; p.status='withdrawn'; p.failAt=now(); closeDrawer(); location.hash='#txn/'+id; render(); toast('Request withdrawn'); }
 function otpFlow(title,done){
   openModal(`<div class="modal-h"><h3>${title}</h3><button class="icon-btn" onclick="closeModal()">${ic.x}</button></div>
   <div class="modal-b" id="otpb"><label class="f">Password</label><input class="input" type="password" id="pw" autocomplete="current-password" placeholder="Enter your portal password"><button class="btn btn-ghost btn-sm mt8" style="padding:0" onclick="$('#pw').value='samplepassword'">Fill sample password</button></div>
@@ -1210,20 +1215,22 @@ function fillOtp(){ document.querySelectorAll('.otp input').forEach((i,k)=>i.val
 /* ================= TRANSACTION DETAIL ================= */
 function timeline(p){
   const b=ben(p.ben); const T=[]; const add=(cls,t,s)=>T.push({cls,t,s});
+  const rest=(from)=>{ ['Being checked','Pending approval','Processing','Money sent','Completed'].slice(from).forEach(x=>add('',x,'')); };
   add('done','Initiated',`By ${USERS[p.by].name} · ${p.at}`);
-  if(p.by!=='admin'||p.status==='awaiting'){
-    if(p.status==='awaiting'){ add('cur','Submitted for Admin approval',`Expires ${p.expires}`); add('','Processing',''); add('','Money sent',''); add('','Completed',''); return T; }
-    if(p.status==='expired'){ add('done','Submitted for Admin approval',''); add('fail','Expired','The request expired before it was approved. No money was taken.'); return T; }
-    if(p.status==='rejected'){ add('done','Submitted for Admin approval',''); add('fail','Rejected by Admin',`"${p.rejectReason}". No money was taken.`); return T; }
-    if(p.status==='withdrawn'){ add('done','Submitted for Admin approval',''); add('fail','Withdrawn','The request was withdrawn. No money was taken.'); return T; }
-    add('done','Submitted for Admin approval',`Approved${p.approvedAt?' · '+p.approvedAt:''}`);
-  }
-  if(p.status==='processing'){ add('cur','Processing',`${money(total(p))} taken from your balance`); add('','Money sent',''); add('','Completed',''); return T; }
+  if(p.status==='checking'){ add('cur','Being checked','We\'re checking a few details before it goes to your Admin. No money has been taken.'); rest(1); return T; }
+  if(p.status==='pending_info'){ add('warn','Pending additional details',`Reply by ${p.infoDue}. No money has been taken.`); rest(1); return T; }
+  if(p.status==='review'){ add('done','Pending additional details',`Details sent${p.infoSent?' · '+p.infoSent:''}`); add('cur','Under review','We\'ll update you once the review is complete.'); rest(1); return T; }
+  if(p.status==='notprocessed'){ add('fail','Not processed',`We couldn't process this payment. No money was taken. Contact support with reference ${p.id}.`); return T; }
+  if(p.status==='withdrawn'&&!p.orderAt){ add('fail','Withdrawn','The request was withdrawn. No money was taken.'); return T; }
+  if(p.infoSent) add('done','Pending additional details','Details sent'); else add('done','Being checked','Done');
+  if(p.status==='awaiting'){ add('cur','Pending approval',`Expires ${p.expires}`); rest(2); return T; }
+  if(p.status==='expired'){ add('done','Pending approval',''); add('fail','Expired','The request expired before it was approved. No money was taken.'); return T; }
+  if(p.status==='rejected'){ add('done','Pending approval',''); add('fail','Rejected by Admin',`"${p.rejectReason}". No money was taken.`); return T; }
+  if(p.status==='withdrawn'){ add('done','Pending approval',''); add('fail','Withdrawn','The request was withdrawn. No money was taken.'); return T; }
+  add('done','Pending approval',`Approved${p.approvedAt?' · '+p.approvedAt:''}`);
+  if(p.status==='processing'){ add('cur','Processing',`${money(total(p))} taken from your balance`); rest(3); return T; }
   add('done','Processing',`${money(total(p))} taken from your balance`);
-  if(p.status==='pending_info'){ add('warn','Pending additional details',`Reply by ${p.infoDue}`); add('','Money sent',''); add('','Completed',''); return T; }
-  if(p.status==='review'){ add('done','Pending additional details',`Details sent${p.infoSent?' · '+p.infoSent:''}`); add('cur','Under review','We\'ll update you once the review is complete.'); add('','Money sent',''); add('','Completed',''); return T; }
   if(p.fail==='notcompleted'){ add('fail','Failed',`We couldn't complete this payment. ${money(total(p))} was refunded to your balance · ${p.failAt}`); return T; }
-  if(p.infoSent) add('done','Pending additional details','Details sent');
   if(p.status==='sent'){ add('done','Money sent',`Sent to ${b.bank}${p.sentAt?' · '+p.sentAt:''}`); add('cur','Completed',`Estimated delivery: ${etaOf(b)}`); return T; }
   add('done','Money sent',`Sent to ${b.bank}${p.sentAt?' · '+p.sentAt:''}`);
   add('done','Completed',`Paid to ${b.bank} · ${p.done}`);
@@ -1233,33 +1240,35 @@ function timeline(p){
 function vTxn(id){
   const p=pay(id); if(!p) return vIntl(); const b=ben(p.ben); const c=CORRIDORS[b.cc]; const fee=feeFor(c.cur);
   let banner='';
-  if(p.status==='pending_info') banner=`<div class="card" style="border-color:var(--red600)"><h3>We need a few more details to complete this payment</h3>
-    <p class="muted" style="margin-top:0">Please upload a copy of the bill of lading for this shipment and confirm the delivery address. Reply within 5 hours, by <b>${p.infoDue}</b>, or the payment will be cancelled and refunded in full.</p>
+  if(p.status==='pending_info') banner=`<div class="card" style="border-color:var(--red600)"><h3>We need a few more details before this payment goes for approval</h3>
+    <p class="muted" style="margin-top:0">Please upload a copy of the bill of lading for this shipment and confirm the delivery address. Reply within 5 hours, by <b>${p.infoDue}</b>. If we don't hear back, the payment won't be processed. No money has been taken.</p>
     <div class="upload ${p.infoFile?'done':''}" onclick="pay('${p.id}').infoFile=true;keepScroll=true;render()">${p.infoFile?ic.ok+' <span>bill-of-lading.pdf · 240 KB</span>':ic.up+'<div>Upload document</div>'}</div>
     <div class="field mt16"><label class="f">Add information <span class="muted">(optional)</span></label><textarea class="input" placeholder="For example, the delivery address"></textarea></div>
     <button class="btn btn-primary" ${p.infoFile?'':'disabled'} onclick="infoSend('${p.id}')">Send</button></div>`;
   if(p.status==='failed'&&p.fail==='returned') banner=`<div class="alert a-warn"><span class="ic">${ic.warn}</span><div><b>${b.nick}'s bank sent this payment back.</b> ${p.returnReason}. ${money(total(p))} is back in your balance. Check the bank details with your supplier before paying again.</div></div>`;
   if(p.status==='failed'&&p.fail==='notcompleted') banner=`<div class="alert a-info"><span class="ic">${ic.info}</span><div><b>We couldn't complete this payment.</b> ${money(total(p))} is back in your balance. Contact support with reference ${p.id} if you have questions.</div></div>`;
+  if(p.status==='notprocessed') banner=`<div class="alert a-info"><span class="ic">${ic.info}</span><div><b>We couldn't process this payment.</b> No money was taken. Please contact support with reference ${p.id}.</div></div>`;
   if(['expired','rejected','withdrawn'].includes(p.status)) banner=`<div class="alert a-info"><span class="ic">${ic.info}</span><div><b>${p.status==='expired'?'This request expired before it was approved.':p.status==='rejected'?'Your Admin rejected this request: "'+p.rejectReason+'".':'This request was withdrawn.'}</b> No money was taken.</div></div>`;
-  const pendingNotMine = p.status==='awaiting';
+  const pendingNotMine = p.status==='awaiting'; const preDebit=['checking','pending_info','review','awaiting','notprocessed','expired','rejected','withdrawn'].includes(p.status); const canWithdraw=['checking','pending_info','review','awaiting'].includes(p.status)&&p.by===S.persona;
   return `<div class="crumbs"><a href="#intl">International payments</a> / ${p.id}</div>
   <div class="row between mb24" style="flex-wrap:wrap"><div><h1>${nm(total(p))} to ${b.nick}</h1><p class="sub-title" style="margin:0">${p.id} · initiated ${p.at} by ${USERS[p.by].name}</p></div>
-  <div class="row">${tag(p.status)}${p.status==='completed'?`<button class="btn btn-primary" onclick="downloadAdvice('${p.id}')">${ic.dl} Download payment advice</button>`:''}${pendingNotMine&&isAdmin()&&p.by!=='admin'?`<button class="btn btn-primary" onclick="go('approve:${p.id}')">Review</button>`:''}${pendingNotMine&&p.by===S.persona&&!isAdmin()?`<button class="btn btn-danger" onclick="withdrawReq('${p.id}')">Withdraw</button>`:''}</div></div>
+  <div class="row">${tag(p.status)}${p.status==='completed'?`<button class="btn btn-primary" onclick="downloadAdvice('${p.id}')">${ic.dl} Download payment advice</button>`:''}${pendingNotMine&&isAdmin()?`<button class="btn btn-primary" onclick="go('approve:${p.id}')">Review</button>`:''}${canWithdraw?`<button class="btn btn-danger" onclick="withdrawReq('${p.id}')">Withdraw</button>`:''}</div></div>
   <div class="grid g-main"><div class="grid" style="align-content:start">${banner}
     <div class="card"><h3>Progress</h3><div class="tl mt16">${timeline(p).map(x=>`<div class="tl-i ${x.cls}"><span class="tl-dot">${x.cls==='done'?ic.check:x.cls==='fail'?ic.x:''}</span><div><div class="tl-t">${x.t}</div><div class="tl-s">${x.s}</div></div></div>`).join('')}</div></div></div>
   <div class="grid" style="align-content:start">
     <div class="card"><h3>Payment</h3>
       <div class="kv"><span class="k">You send</span><span class="v">${nm(p.aed)}</span></div><div class="kv"><span class="k">Fee</span><span class="v">${feeTxt(c.cur,(typeof p!=='undefined'&&p&&p.disc)||0)}</span></div>
       <div class="kv total"><span class="k">Total</span><span class="v">${nm(total(p))}</span></div>
-      <div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${p.rate.toFixed(4)} ${c.cur}${p.status==='awaiting'?' (indicative)':''}</span></div>
-      <div class="kv"><span class="k">${p.status==='awaiting'?'They receive about':'They receive'}</span><span class="v">${nm(recv(p),c.cur)}</span></div></div>
+      <div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${p.rate.toFixed(4)} ${c.cur}${preDebit?' (indicative)':''}</span></div>
+      <div class="kv"><span class="k">${preDebit?'They receive about':'They receive'}</span><span class="v">${nm(recv(p),c.cur)}</span></div></div>
     <div class="card"><h3>Beneficiary</h3>
       <div class="row" style="gap:10px"><span class="flag" style="font-size:24px">${c.flag}</span><div><div style="font-weight:600">${b.name}</div><div class="small muted">${c.name} · ${b.bank} ${b.acct}</div></div></div>
       <div class="kv mt8"><span class="k">Invoice</span><span class="v num">${p.inv}</span></div><div class="kv"><span class="k">Purpose</span><span class="v">${PURPOSES[p.purpose].name}</span></div>
       <div class="mt8">${(p.docs||[]).map(f=>`<span class="doc-chip" onclick="viewDoc('${f}')">${ic.file} ${f}</span>`).join('')}</div></div>
   </div></div>`;
 }
-function infoSend(id){ const p=pay(id); p.status='review'; p.infoSent=now(); toast('Sent. We\'ll review it shortly.'); keepScroll=true; render(); }
+function infoSend(id){ const p=pay(id); p.status='review'; p.infoSent=now(); toast('Sent. We\'ll review it shortly.'); keepScroll=true; render();
+  setTimeout(()=>{ if(p.status!=='review') return; if(S.forceReviewFail){ S.forceReviewFail=false; notProcessed(p); } else clearPay(p); rerenderIf(p); },4000); }
 
 /* ================= PDF (payment advice) ================= */
 function pdfEsc(s){ return String(s).replace(/[^\x20-\x7E]/g,ch=>({'ü':'u','Ü':'U','•':'*','·':'-'}[ch]||'')).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)'); }
@@ -1338,21 +1347,24 @@ function emailPreview(){
 /* ================= SCENARIOS ================= */
 function scen(fn){ S=seed(); closeModal(); closeDrawer(true); fn(); render(); }
 const SCEN=[
-  ['Maker submits, Admin approves','After approval the payment moves through Processing, Money sent and Completed. Omar reviews Sara\'s payment in the approvals module: current rate, wallet balance, invoice and documents. Authorize with password and OTP.',()=>{S.persona='admin';location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open approval'],
+  ['Maker submits, Admin approves','Sara\'s payment was checked first, then reached Omar. He reviews it in the approvals module: current rate, wallet balance, full beneficiary details, invoice and documents, and authorizes with password and OTP. Then Processing, Money sent and Completed.',()=>{S.persona='admin';location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open approval'],
+  ['Checked before approval','A payment just submitted shows Being checked. When the checks pass, it becomes Pending approval and the Admin is alerted. Nothing is taken from the balance.',()=>{S.persona='maker';location.hash='#txn/IP-10242';screenPay(pay('IP-10242'));},'Watch it'],
+  ['Not processed','The checks didn\'t clear, or the business didn\'t send the requested details in time. The payment never reaches the Admin; no money was taken and no reason is given.',()=>{S.persona='maker';location.hash='#txn/IP-10234';},'Open'],
   ['Maker creates a payment','Starts on the International payments page: enter the amount and pick the currency, then beneficiary, invoice and purpose. Review and submit.',()=>{S.persona='maker';S.introSeen=true;location.hash='#intl';},'Start'],
   ['Pay from a supplier invoice','Choose an unpaid invoice and pay it; the supplier and invoice are filled in, you enter the amount.',()=>{S.persona='maker';S.introSeen=true;location.hash='#invoices';},'Open'],
   ['Not enough money','Shortfall shown while typing, with three ways to add money.',()=>{S.persona='maker';S.balance=1200;S.introSeen=true;startPay('HK','B3');S.draft.lockBen=false;S.draft.send='5000';S.draft.last='send';calcDraft();},'Try it'],
   ['Rate refreshes before approval','The rate refresh is shortened to 10 seconds here so you can see it update.',()=>{S.persona='admin';S.quoteSecs=10;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open'],
   ['Approval request expired','Nobody approved in time. Shown as Expired; no money taken.',()=>{location.hash='#txn/IP-10236';},'Open'],
-  ['Pending additional details','The business has 5 hours to upload documents; status moves to Under review.',()=>{S.persona='maker';location.hash='#txn/IP-10238';},'Open'],
-  ['Under review','Additional details were sent and are being reviewed.',()=>{location.hash='#txn/IP-10237';},'Open'],
-  ['Failed and refunded','The payment couldn\'t be completed after the money was sent; refunded in full.',()=>{location.hash='#txn/IP-10239';},'Open'],
+  ['Pending additional details','Before the payment goes to the Admin, the business has 5 hours to upload documents. After upload it moves to Under review, then to Pending approval.',()=>{S.persona='maker';location.hash='#txn/IP-10238';},'Open'],
+  ['Under review','Additional details were sent and are being reviewed. The payment hasn\'t reached the Admin yet.',()=>{location.hash='#txn/IP-10237';},'Open'],
+  ['Failed and refunded','The payout failed after the debit; refunded in full.',()=>{location.hash='#txn/IP-10239';},'Open'],
   ['Returned by the bank and refunded','The supplier\'s bank sent it back after completion.',()=>{location.hash='#txn/IP-10233';},'Open'],
+  ['Rate changes at Authorize','The rate moves between the last refresh and the Authorize click. Omar sees the new total and authorizes again.',()=>{S.persona='admin';S.forceRateMove=true;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Try it'],
   ['Corridor temporarily unavailable','Payments to Türkiye are paused and can\'t be selected.',()=>{S.pausedCorridor='TR';S.introSeen=true;location.hash='#intl';},'Try it'],
-  ['Beneficiary needs more information','After review, the maker has 72 hours to upload a document before the beneficiary goes to the Admin.',()=>{S.persona='maker';S.forceBenInfo=true;location.hash='#beneficiaries';setTimeout(()=>startBen(),50);},'Try it'],
+  ['Beneficiary needs more information','After review, the maker has 72 hours to upload a document before the beneficiary can be paid.',()=>{S.persona='maker';S.forceBenInfo=true;location.hash='#beneficiaries';setTimeout(()=>startBen(),50);},'Try it'],
   ['Beneficiary can\'t be added','Screening doesn\'t clear. The business only sees that it couldn\'t be added, with no reason.',()=>{S.persona='maker';S.forceBenFail=true;location.hash='#beneficiaries';setTimeout(()=>startBen(),50);},'Try it'],
-  ['Bank details changed before a payment','Hengtai\'s account was changed yesterday by Sara. Omar sees the old and new account side by side when approving.',()=>{S.persona='admin';location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open'],
-  ['Account name doesn\'t match','The receiving bank returns a different account name. The maker sees it on the beneficiary and the Admin gets a red flag at approval.',()=>{S.persona='maker';S.forceNoMatch=true;location.hash='#beneficiaries';setTimeout(()=>startBen('IN'),50);},'Try it'],
+  ['Bank details changed before a payment','Hengtai\'s account was changed yesterday by Sara. Omar sees the full bank details when approving and verifies them himself.',()=>{S.persona='admin';location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open'],
+  ['Account name doesn\'t match','The receiving bank returns a different account name. The maker sees it on the beneficiary, and the Admin sees the name check result with the beneficiary details.',()=>{S.persona='maker';S.forceNoMatch=true;location.hash='#beneficiaries';setTimeout(()=>startBen('IN'),50);},'Try it'],
   ['Maker can\'t approve their own request','Sara sees her pending payment as read-only and can withdraw it.',()=>{S.persona='maker';S.apTab='req';location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Open'],
   ['Add a new supplier from invoices','Add invoice, then "+ New supplier" goes into adding a beneficiary.',()=>{S.introSeen=true;location.hash='#invoices';setTimeout(addInvoice,50);},'Open'],
   ['First-time user','A business that has never paid abroad: no payments, invoices or beneficiaries yet. Also available from the View as switch in the top banner.',()=>{emptyBiz();S.introSeen=true;location.hash='#intl';},'Open'],
