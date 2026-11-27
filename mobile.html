@@ -186,6 +186,7 @@ textarea.in{height:auto;min-height:84px;padding:12px 14px;resize:none}
       <button class="pill" onclick="demo('approve')">Admin approves</button>
       <button class="pill" onclick="demo('docs')">Documents required</button>
       <button class="pill" onclick="demo('rate')">Rate changes at Authorize</button>
+      <button class="pill" onclick="demo('hold')">New beneficiary: 4 hour hold</button>
       <button class="pill" onclick="demo('reset')">Reset data</button></p>
     <p><a href="./">Open the web prototype</a></p>
   </div>
@@ -220,7 +221,7 @@ const INFO={
   'Documents required':'We need documents before this payment can go to the Admin. Upload them by the deadline shown, or the payment won\'t be processed. No money has been taken.',
   'Documents under review':'We received your documents and are reviewing them. The payment goes to the Admin once the review is done.',
   'Pending approval':'Waiting for your Admin to approve. The request expires 24 hours after it reaches the Admin. No money has been taken.',
-  'Approved':'Your Admin approved the payment with password and OTP, and the total was taken from your balance.',
+  'Approved':'Your Admin approved the payment with password and authenticator OTP, and the total was taken from your balance.',
   'Processing':'The payment is on its way to the beneficiary\'s bank.',
   'Completed':'The beneficiary\'s bank has received the payment. Your payment advice is ready to download.',
   'Failed':'We couldn\'t complete the payment. The full amount, including fee and VAT, is refunded to your balance.',
@@ -231,6 +232,11 @@ const INFO={
   'Same day':'Same day delivery is an estimate. It can take longer depending on the receiving bank or wallet, weekends and public holidays in either country.'
 };
 const pad=n=>String(n).padStart(2,'0');
+const HOLD_MS=4*3600e3;
+const holdEnd=b=>b&&b.addedTs?b.addedTs+HOLD_MS:0;
+const inHold=b=>!!b&&!S.skipHold&&b.status==='active'&&Date.now()<holdEnd(b);
+const t12=ts=>{const d=new Date(ts);let h=d.getHours();const ap=h>=12?'PM':'AM';h=h%12||12;return `${h}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`+(d.getDate()!==new Date().getDate()?' tomorrow':'');};
+const holdTxt=b=>`You can pay this beneficiary from ${t12(holdEnd(b))}`;
 const now=()=>{const d=new Date();return `${d.getDate()} ${d.toLocaleString('en',{month:'short'})}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
 const plusH=h=>{const d=new Date(Date.now()+h*3600e3);return `${d.getDate()} ${d.toLocaleString('en',{month:'short'})}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
 const money=(v,c='AED')=>`${c} ${Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -242,7 +248,7 @@ function seed(){ return {
     {id:'B3',nick:'Kowloon Packaging',name:'Kowloon Packaging Ltd',cc:'HK',bank:'HSBC Hong Kong',acct:'•••• 6789',status:'active',cpv:'na'},
     {id:'B4',nick:'Anatolia Ceramics',name:'Anatolia Ceramics A.S.',cc:'TR',bank:'Garanti BBVA',acct:'•••• 1326',status:'active',cpv:'close'},
     {id:'B5',nick:'Rheinwerk',name:'Rheinwerk Industrietechnik GmbH',cc:'DE',bank:'Commerzbank',acct:'•••• 3000',status:'active',cpv:'match'},
-    {id:'B6',nick:'Pacific Components',name:'Pacific Components Inc.',cc:'US',bank:'Bank of America',acct:'•••• 3008',status:'active',cpv:'na'}],
+    {id:'B6',nick:'Pacific Components',name:'Pacific Components Inc.',cc:'US',bank:'Bank of America',acct:'•••• 3008',status:'active',cpv:'na',addedTs:Date.now()-2*3600e3}],
   invs:[{id:'I1',ben:'B1',no:'HT-2026-1187',due:'2 Nov 2026',status:'unpaid'},{id:'I2',ben:'B2',no:'MT/26-27/0419',due:'25 Oct 2026',status:'overdue'},{id:'I3',ben:'B3',no:'KP-88213',due:'29 Oct 2026',status:'unpaid'},{id:'I4',ben:'B5',no:'RW-2026-3391',due:'14 Nov 2026',status:'unpaid'}],
   pays:[
     {id:'IP-10242',ben:'B3',recv:12921.02,rate:2.1182,status:'checking',by:'maker',at:plusH(-0.1),purpose:'goods',sof:'Company funds',inv:'KP-88231'},
@@ -316,7 +322,7 @@ function vIntl(){
 }
 function vPayments(){ const f=S.pf||'all'; const L=S.pays.filter(p=>f==='all'||(f==='prog'?['checking','pending_info','review','awaiting','approved','processing'].includes(p.status):['completed','failed','cancelled','rejected','expired','withdrawn'].includes(p.status)));
   return shell({title:'Payments',back:"history.back()",body:`<div class="seg"><button class="${f==='all'?'on':''}" onclick="S.pf='all';render()">All</button><button class="${f==='prog'?'on':''}" onclick="S.pf='prog';render()">In progress</button><button class="${f==='done'?'on':''}" onclick="S.pf='done';render()">Finished</button></div><div class="card" style="padding:4px 16px">${L.length?L.map(payRow).join(''):'<div class="empty">Nothing here</div>'}</div>`}); }
-function vBens(){ return shell({title:'Beneficiaries',back:"history.back()",body:`<div class="card" style="padding:4px 16px">${S.bens.map(b=>`<div class="li"><div class="ic"><span class="flag">${COR[b.cc].f}</span></div><div class="grow"><div class="t">${b.nick}</div><div class="s">${b.bank} ${b.acct} · Same day</div></div>${b.status==='active'?'<span class="tag t-green">Active</span>':'<span class="tag t-yellow">Being checked</span>'}</div>`).join('')}</div>`,cta:`<button class="btn btn-p" onclick="addBen()">${I(ic.plus,18)} Add beneficiary</button>`}); }
+function vBens(){ return shell({title:'Beneficiaries',back:"history.back()",body:`<div class="card" style="padding:4px 16px">${S.bens.map(b=>`<div class="li"><div class="ic"><span class="flag">${COR[b.cc].f}</span></div><div class="grow"><div class="t">${b.nick}</div><div class="s">${b.bank} ${b.acct} · Same day</div></div>${b.status==='active'?'<span class="tag t-green">Active</span>':'<span class="tag t-yellow">Being checked</span>'}</div>${inHold(b)?`<div class="xs muted" style="margin:-6px 0 10px 52px">Pay from ${t12(holdEnd(b))}</div>`:''}`).join('')}</div><p class="help mt12">You can pay a new beneficiary 4 hours after it's added.</p>`,cta:`<button class="btn btn-p" onclick="addBen()">${I(ic.plus,18)} Add beneficiary</button>`}); }
 
 /* ---------- new payment: one step per screen ---------- */
 function lastTo(id){ return S.pays.find(p=>p.ben===id); }
@@ -346,7 +352,7 @@ function vPay(){
     cta:`<button class="btn btn-p" id="next" ${parseFloat(d.recv)>0?'':'disabled'} onclick="stepNext()">Continue</button>`});
   if(d.step===2){ const list=S.bens.filter(x=>x.cc===d.cc); return shell({title:'New payment',back:'stepBack()',right:close,tabs:false,body:`${stepHead()}
     <h1 style="font-size:21px">Who are you paying?</h1><p class="sub">Suppliers in ${c.n}.</p>
-    ${list.map(x=>`<button class="opt ${d.ben===x.id?'sel':''}" onclick="pickBen('${x.id}')" ${x.status!=='active'?'disabled style="opacity:.55"':''}><span class="rb"></span><div class="grow"><div style="font-weight:600">${x.nick}</div><div class="xs muted">${x.bank} ${x.acct} · Same day ${x.status!=='active'?'· Being checked':''}</div></div><span class="flag">${c.f}</span></button>`).join('')}
+    ${list.map(x=>`<button class="opt ${d.ben===x.id?'sel':''}" onclick="pickBen('${x.id}')" ${x.status!=='active'?'disabled style="opacity:.55"':''}><span class="rb"></span><div class="grow"><div style="font-weight:600">${x.nick}</div><div class="xs muted">${x.bank} ${x.acct} · Same day ${x.status!=='active'?'· Being checked':''}${inHold(x)?' · Pay from '+t12(holdEnd(x)):''}</div></div><span class="flag">${c.f}</span></button>`).join('')}
     <button class="opt dashed mt8" onclick="addBen('${d.cc}')">${I(ic.plus,18)} New beneficiary</button>`,
     cta:`<button class="btn btn-p" ${b&&b.status==='active'?'':'disabled'} onclick="stepNext()">Continue</button>`}); }
   if(d.step===3){ const invs=S.invs.filter(i=>i.ben===d.ben&&i.status!=='paid'); return shell({title:'New payment',back:'stepBack()',right:close,tabs:false,body:`${stepHead()}
@@ -365,14 +371,15 @@ function vPay(){
     ${d.docs.map(f=>`<div class="up done">${I(ic.tick)} ${f}</div>`).join('<div style="height:8px"></div>')}
     ${d.docs.length<2?`<div class="up ${d.docs.length?'mt8':''}" onclick="S.d.docs.push(['bill-of-lading.pdf','purchase-order.pdf'][S.d.docs.length]);render()">${I(ic.up)}<div>Add a document</div><div class="xs">For example a bill of lading or purchase order. If we need anything else, we'll ask.</div></div>`:''}`,
     cta:`<button class="btn btn-p" onclick="stepNext()">Review payment</button>`});
-  if(d.step===5){ const tot=dTot(); const short=tot>S.balance; return shell({title:'Review',back:'stepBack()',right:close,tabs:false,body:`${stepHead()}
+  if(d.step===5){ const tot=dTot(); const short=tot>S.balance; const held=inHold(b); return shell({title:'Review',back:'stepBack()',right:close,tabs:false,body:`${stepHead()}
+    ${held?`<div class="alert a-info">${I(ic.info,18)}<div><b>${holdTxt(b)}.</b> New beneficiaries can be paid 4 hours after they're added.</div></div>`:''}
     <div class="card"><div class="small muted">${b.nick} receives</div><div class="num" style="font-size:28px;font-weight:600">${money(d.recv,c.c)}</div><div class="small muted">${c.f} ${c.n} · Delivery: Same day ${infoBtn('Same day')}</div>
       <div class="kv mt8"><span class="k">Rate</span><span class="v num">1 AED = ${r.toFixed(4)} ${c.c}</span></div><div class="kv"><span class="k">You send</span><span class="v">${money(d.send)}</span></div><div class="kv"><span class="k">Fee</span><span class="v">AED 15.00 + VAT 0.75</span></div><div class="kv total"><span class="k">Total from balance</span><span class="v">${money(tot)}</span></div><div class="help">Indicative. Fixed when your Admin approves.</div></div>
     <div class="card"><h3>Beneficiary</h3><div class="kv"><span class="k">Name</span><span class="v">${b.name}</span></div><div class="kv"><span class="k">Bank</span><span class="v">${b.bank}</span></div><div class="kv"><span class="k">Account</span><span class="v num">${b.acct}</span></div></div>
     <div class="card"><div class="kv"><span class="k">Invoice</span><span class="v num">${d.invNo}</span></div><div class="kv"><span class="k">Purpose</span><span class="v">${PURP[d.purpose]}</span></div><div class="kv"><span class="k">Source of funds</span><span class="v">${d.sof}</span></div><div class="kv"><span class="k">Pay with</span><span class="v">botim business wallet</span></div></div>
     ${short?`<div class="alert a-err mt12">${I(ic.warn,18)}<div><b>Your balance isn't enough for this payment yet.</b> Add money to your account, then try again.</div></div><button class="opt mt8" onclick="toast('Opens bank transfer details for your botim IBAN')">${I(ic.bank)}<div class="grow"><b>Bank transfer to your botim IBAN</b><div class="xs muted">From any UAE bank</div></div></button><button class="opt" onclick="toast('Opens the debit card top-up')">${I(ic.wallet)}<div class="grow"><b>Top up with a UAE debit card</b><div class="xs muted">Instant</div></div></button>`:''}
     <p class="help mt12">We check a few details first, then it goes to ${isAdmin()?'My authorizations for your approval':'your Admin'}. Nothing is taken from your balance until it's approved.</p>`,
-    cta:`<button class="btn btn-p" ${short?'disabled':''} onclick="submitPay()">Submit</button>`}); }
+    cta:`<button class="btn btn-p" ${short||held?'disabled':''} onclick="submitPay()">Submit</button>`}); }
 }
 const invOk=()=>{ const d=S.d; return d.invId?!!d.invNo:(d.invFile&&!!String(d.invNo).trim()); };
 function pickBen(id){ S.d.ben=id; S.d.invId=null; S.d.invNo=''; S.d.invNew=!S.invs.some(i=>i.ben===id&&i.status!=='paid'); S.d.invFile=false; S.d.remembered=false; remember(id); render(); }
@@ -381,10 +388,10 @@ function addBen(cc){ cc=cc||'CN'; openSheet(`<h2>New beneficiary in ${COR[cc].n}
   <label class="f">Registered company name</label><input class="in" id="bn" placeholder="As registered with the bank">
   <label class="f">Bank name</label><input class="in" id="bb" placeholder="For example Bank of China">
   <label class="f">Account number</label><input class="in" id="ba" inputmode="numeric" placeholder="Account number">
-  <div class="help">Delivery: Same day. We check every new beneficiary before you can pay them. This usually takes a few minutes.</div>
+  <div class="help">Delivery: Same day. We check every new beneficiary before you can pay them. This usually takes a few minutes. You can pay a new beneficiary 4 hours after you add it.</div>
   <button class="btn btn-p mt16" onclick="saveBen('${cc}')">Save beneficiary</button>`); }
-function saveBen(cc){ const n=($('#bn').value||'New Supplier Co.').trim(); const id='B'+(S.bens.length+1); const nb={id,nick:n.split(' ').slice(0,2).join(' '),name:n,cc,bank:$('#bb').value||'Bank',acct:'•••• '+(($('#ba').value||'0000').slice(-4)),status:'screening',cpv:'na'}; S.bens.push(nb); closeSheet(); toast('Saved. Being checked.'); render();
-  setTimeout(()=>{ nb.status='active'; toast(`${nb.nick} is ready to pay`); if(S.d&&S.d.step===2&&S.d.cc===cc) pickBen(id); else render(); },2500); }
+function saveBen(cc){ const n=($('#bn').value||'New Supplier Co.').trim(); const id='B'+(S.bens.length+1); const nb={id,nick:n.split(' ').slice(0,2).join(' '),name:n,cc,bank:$('#bb').value||'Bank',acct:'•••• '+(($('#ba').value||'0000').slice(-4)),status:'screening',cpv:'na',addedTs:Date.now()}; S.bens.push(nb); closeSheet(); toast('Saved. Being checked.'); render();
+  setTimeout(()=>{ nb.status='active'; toast(inHold(nb)?`${nb.nick} added. Pay from ${t12(holdEnd(nb))}`:`${nb.nick} is ready to pay`); if(S.d&&S.d.step===2&&S.d.cc===cc) pickBen(id); else render(); },2500); }
 function submitPay(){ const d=S.d; const p={id:'IP-'+(S.seq++),ben:d.ben,recv:+(+d.recv).toFixed(2),rate:S.rates[d.cc],status:'checking',by:S.persona,at:now(),purpose:d.purpose,sof:d.sof,inv:d.invNo}; S.pays.unshift(p); S.d=null; go('#done/'+p.id); screen(p); }
 function screen(p){ setTimeout(()=>{ if(p.status!=='checking') return; if(S.forceDocs){ S.forceDocs=false; p.status='pending_info'; p.infoDue=plusH(5); notify(p.by,'Documents required',`We need a few more details for ${p.id}.`,'#txn/'+p.id); } else clearPay(p); render(); },3000); }
 function clearPay(p){ p.status='awaiting'; p.orderAt=now(); p.expires=plusH(24); notify('admin','Payment waiting for your approval',`${USERS[p.by].n} submitted a payment to ${ben(p.ben).nick}.`,'#approval/'+p.id); }
@@ -460,12 +467,14 @@ function vMore(){ return shell({title:'More',body:`
     <div class="li" onclick="go('#bens')"><div class="ic">${I(ic.people)}</div><div class="grow"><div class="t">Beneficiaries</div></div></div>
     <div class="li" onclick="demo('docs')"><div class="ic">${I(ic.file)}</div><div class="grow"><div class="t">Try: documents required</div></div></div>
     <div class="li" onclick="demo('rate')"><div class="ic">${I(ic.warn)}</div><div class="grow"><div class="t">Try: rate changes at Authorize</div></div></div>
+    <div class="li" onclick="demo('hold')"><div class="ic">${I(ic.people)}</div><div class="grow"><div class="t">Try: new beneficiary hold</div></div></div>
     <div class="li" onclick="demo('reset')"><div class="ic">${I(ic.back)}</div><div class="grow"><div class="t">Reset demo data</div></div></div>
     <div class="li" onclick="location.href='./'"><div class="ic">${I(ic.grid)}</div><div class="grow"><div class="t">Open the web prototype</div></div></div></div></div>`}); }
 function demo(k){ if(k==='reset'){ S=seed(); go('#home'); toast('Demo data reset'); return; }
   if(k==='submit'){ S.persona='maker'; startPay('B1','I1'); toast('Enter an amount to start'); }
   if(k==='approve'){ S.persona='admin'; go('#approval/IP-10241'); }
   if(k==='docs'){ S.persona='maker'; S.forceDocs=true; startPay('B2','I2'); toast('This payment will ask for documents after you submit'); }
+  if(k==='hold'){ S.persona='maker'; go('#bens'); toast('Pacific Components was added 2 hours ago'); }
   if(k==='rate'){ S.persona='admin'; S.forceRate=true; go('#approval/IP-10241'); toast('Tap Authorize to see the rate change'); }
   personaPills(); }
 function personaPills(){ const m=$('#vMaker'),a=$('#vAdmin'); if(m){ m.classList.toggle('on',!isAdmin()); a.classList.toggle('on',isAdmin()); } }
