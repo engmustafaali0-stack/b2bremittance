@@ -769,6 +769,7 @@ const SINFO = {
   'Rejected':'Your Admin rejected the payment, with a remark. No money was taken.',
   'Expired':'Nobody approved the payment within 24 hours of it reaching the Admin. No money was taken.',
   'Withdrawn':'The Maker withdrew the payment before it was approved. No money was taken.',
+  'Pending':'New beneficiaries can be paid 4 hours after they\'re added. The beneficiary becomes Active when the 4 hours have passed.',
   'Same day':'Same day delivery is an estimate. It can take longer depending on the receiving bank or wallet, weekends and public holidays in either country.'
 };
 const sinfo = t => SINFO[t]?`<span class="sinfo" tabindex="0" role="button" aria-label="What ${t} means" data-tip="${SINFO[t].replace(/"/g,'&quot;')}" onclick="event.stopPropagation();tipToggle(this)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></span>`:'';
@@ -787,9 +788,10 @@ const HOLD_MS = 4*3600e3;
 const holdEnd = b => b && b.addedTs ? b.addedTs+HOLD_MS : 0;
 const inHold = b => !!b && !S.skipHold && b.status==='active' && Date.now() < holdEnd(b);
 const t12 = ts => { const d=new Date(ts); let h=d.getHours(); const ap=h>=12?'PM':'AM'; h=h%12||12; return `${h}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`+(d.getDate()!==new Date().getDate()?' tomorrow':''); };
-const holdTxt = b => `You can pay this beneficiary from ${t12(holdEnd(b))}`;
+const holdTxt = b => `This beneficiary is pending. You can pay it from ${t12(holdEnd(b))}`;
+const payable = b => !!b && b.status==='active' && !inHold(b);
 const holdNote = b => inHold(b)?`<div class="small muted" style="margin-top:4px">Pay from ${t12(holdEnd(b))}</div>`:'';
-const btag = b => `<span class="tag ${BSTATUS[b.status][1]}">${b.status==='cooling'?'Available from '+b.availFrom:BSTATUS[b.status][0]}</span>`;
+const btag = b => inHold(b)?`<span class="tag-w"><span class="tag t-yellow">Pending</span>${sinfo('Pending')}</span>`:`<span class="tag ${BSTATUS[b.status][1]}">${b.status==='cooling'?'Available from '+b.availFrom:BSTATUS[b.status][0]}</span>`;
 
 /* ================= approvals (generic module) ================= */
 function approvalItems(){
@@ -981,7 +983,7 @@ const payRow = p => { const b=ben(p.ben); const c=CORRIDORS[b.cc];
   return `<div class="list-item click-row" onclick="location.hash='#txn/${p.id}'"><span class="flag" style="font-size:22px">${c.flag}</span><div class="li-main"><div class="t">${b.nick}</div><div class="s"><span class="num">${p.id}</span> · ${p.done||p.at}</div></div>
     <div class="amt-col"><div class="num" style="font-weight:600">${money(recv(p),c.cur)}</div><div class="small muted num">${money(total(p))}</div></div>
     <div class="st-col">${tag(p.status)}</div>
-    <div class="sa-col">${p.status==='completed'&&b.status==='active'?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();sendAgain('${p.id}')">Send again</button>`:''}</div></div>`; };
+    <div class="sa-col">${p.status==='completed'&&payable(b)?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();sendAgain('${p.id}')">Send again</button>`:''}</div></div>`; };
 function vIntl(){
   const pays = S.payments.slice().sort((x,y)=>x.id<y.id?1:-1);
   const fresh = !S.payments.length;
@@ -1016,7 +1018,7 @@ function vPayments(){
   ${intlTabs('p')}
   <div class="card" style="padding:8px 8px 0"><div class="table-wrap"><table>
     <thead><tr><th>Reference</th><th>Beneficiary</th><th>You send</th><th>They receive</th><th>Created</th><th>Status</th><th></th></tr></thead>
-    <tbody>${pays.length?pays.map(p=>{const b=ben(p.ben);const c=CORRIDORS[b.cc];return `<tr class="click" onclick="location.hash='#txn/${p.id}'"><td class="num" style="font-weight:600">${p.id}</td><td><div class="row" style="gap:8px"><span class="flag">${c.flag}</span><div><div style="font-weight:600">${b.nick}</div><div class="small muted">${c.name} · ${b.acct}</div></div></div></td><td>${nm(total(p))}</td><td>${nm(recv(p),c.cur)}</td><td class="small muted">${p.at}<br>by ${USERS[p.by].name}</td><td>${tag(p.status)}</td><td>${p.status==='completed'&&b.status==='active'?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();sendAgain('${p.id}')">Send again</button>`:''}</td></tr>`}).join(''):'<tr><td colspan="7"><div class="empty">No payments yet.</div></td></tr>'}</tbody>
+    <tbody>${pays.length?pays.map(p=>{const b=ben(p.ben);const c=CORRIDORS[b.cc];return `<tr class="click" onclick="location.hash='#txn/${p.id}'"><td class="num" style="font-weight:600">${p.id}</td><td><div class="row" style="gap:8px"><span class="flag">${c.flag}</span><div><div style="font-weight:600">${b.nick}</div><div class="small muted">${c.name} · ${b.acct}</div></div></div></td><td>${nm(total(p))}</td><td>${nm(recv(p),c.cur)}</td><td class="small muted">${p.at}<br>by ${USERS[p.by].name}</td><td>${tag(p.status)}</td><td>${p.status==='completed'&&payable(b)?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();sendAgain('${p.id}')">Send again</button>`:''}</td></tr>`}).join(''):'<tr><td colspan="7"><div class="empty">No payments yet.</div></td></tr>'}</tbody>
   </table></div></div>`;
 }
 function calcCard(){
@@ -1038,7 +1040,7 @@ function calcCard(){
 }
 function payAgainRow(){
   const seen=new Set(); const rows=[];
-  S.payments.filter(p=>p.status==='completed').forEach(p=>{ const b=ben(p.ben); if(b&&b.status==='active'&&!seen.has(b.id)){ seen.add(b.id); rows.push([p,b]); } });
+  S.payments.filter(p=>p.status==='completed').forEach(p=>{ const b=ben(p.ben); if(payable(b)&&!seen.has(b.id)){ seen.add(b.id); rows.push([p,b]); } });
   if(!rows.length) return '';
   return `<div class="pay-again"><div class="small muted">Pay a recent supplier again</div><div class="chips mt8">${rows.slice(0,4).map(([p,b])=>`<button class="cc-btn" onclick="sendAgain('${p.id}')"><span class="flag" style="font-size:16px">${CORRIDORS[b.cc].flag}</span>${b.nick}</button>`).join('')}</div></div>`;
 }
@@ -1086,10 +1088,11 @@ function vInvoices(){
 function vBens(){
   return `<div class="row between mb24" style="flex-wrap:wrap"><div><h1>International payments</h1><p class="sub-title" style="margin:0">Businesses you pay abroad.</p></div><button class="btn btn-primary" onclick="startBen()">Add beneficiary</button></div>
   ${intlTabs('b')}
+  ${S.beneficiaries.filter(inHold).map(b=>`<div class="alert a-info mb16"><span class="ic">${ic.info}</span><div><b>${b.nick} is pending.</b> You can pay it from ${t12(holdEnd(b))}. New beneficiaries can be paid 4 hours after they're added.</div></div>`).join('')}
   <div class="card" style="padding:8px 8px 0"><div class="table-wrap"><table>
   <thead><tr><th>Beneficiary</th><th>Country and method</th><th>Account</th><th>Delivery</th><th>Status</th><th></th></tr></thead>
-  <tbody>${S.beneficiaries.map(b=>{const c=CORRIDORS[b.cc];const m=methodOf(b);return `<tr class="click" onclick="location.hash='#ben/${b.id}'"><td><div style="font-weight:600">${b.nick}</div><div class="small muted">${b.name}</div></td><td><span class="flag">${c.flag}</span> ${c.name} · ${m.name}</td><td class="num">${b.bank}<br><span class="small muted">${b.acct}</span></td><td class="small">${m.eta}${sinfo('Same day')}</td><td>${btag(b)}${holdNote(b)}</td><td>${b.status==='active'?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();startPay('${b.cc}','${b.id}')">Pay</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>
-  <p class="small muted mt16">You can pay a new beneficiary 4 hours after it's added. Changing a beneficiary's bank details goes through the same check as adding a new one.</p>`;
+  <tbody>${S.beneficiaries.map(b=>{const c=CORRIDORS[b.cc];const m=methodOf(b);return `<tr class="click" onclick="location.hash='#ben/${b.id}'"><td><div style="font-weight:600">${b.nick}</div><div class="small muted">${b.name}</div></td><td><span class="flag">${c.flag}</span> ${c.name} · ${m.name}</td><td class="num">${b.bank}<br><span class="small muted">${b.acct}</span></td><td class="small">${m.eta}${sinfo('Same day')}</td><td>${btag(b)}${holdNote(b)}</td><td>${payable(b)?`<button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();startPay('${b.cc}','${b.id}')">Pay</button>`:''}</td></tr>`}).join('')}</tbody></table></div></div>
+  <p class="small muted mt16">New beneficiaries show as Pending and can be paid 4 hours after they're added. Changing a beneficiary's bank details goes through the same check as adding a new one.</p>`;
 }
 
 /* ================= ADD BENEFICIARY ================= */
@@ -1130,8 +1133,8 @@ function screenBen(b){
   setTimeout(()=>{
     if(b.failScreen){ b.status='declined'; b.screenFail=true; notify(b.addedBy,'Beneficiary not added',`We couldn't add ${b.nick}.`,'#ben/'+b.id); }
     else if(b.needInfo){ b.status='info'; b.infoDue=plusH(72); b.infoReq='Please upload a recent bank letter or statement showing the beneficiary\'s account name and number.'; notify(b.addedBy,'Additional information needed for a beneficiary',`We need a document for ${b.nick} before it can be added.`,'#ben/'+b.id); }
-    else { b.screened=true; b.status='active'; notify(b.addedBy,'Beneficiary added',inHold(b)?`${b.nick} is added. ${holdTxt(b)}.`:`${b.nick} is ready to pay.`,'#ben/'+b.id);
-      if(b.fromPay&&S.draft&&location.hash==='#ben/'+b.id){ Object.assign(S.draft,{cc:b.cc,ben:b.id,invId:null,invNo:'',invFile:false,invNew:true,other:[]}); calcDraft(); location.replace('#pay/1'); toast(`${b.nick} added and selected`); return; } }
+    else { b.screened=true; b.status='active'; notify(b.addedBy,'Beneficiary added',inHold(b)?`${b.nick} is added and pending. You can pay it from ${t12(holdEnd(b))}.`:`${b.nick} is ready to pay.`,'#ben/'+b.id);
+      if(b.fromPay&&S.draft&&location.hash==='#ben/'+b.id&&payable(b)){ Object.assign(S.draft,{cc:b.cc,ben:b.id,invId:null,invNo:'',invFile:false,invNew:true,other:[]}); calcDraft(); location.replace('#pay/1'); toast(`${b.nick} added and selected`); return; } }
     if(location.hash==='#ben/'+b.id) { keepScroll=true; render(); }
   },2500);
 }
@@ -1145,13 +1148,13 @@ function vBen(id){
   if(b.status==='active'&&inHold(b)) steps.push(['Ready to pay',`From ${t12(holdEnd(b))}. New beneficiaries can be paid 4 hours after they're added.`,'cur']);
   else if(b.status==='active') steps.push(['Ready to pay','','done']); else if(b.status!=='declined') steps.push(['Ready to pay','','']);
   return `<div class="crumbs"><a href="#beneficiaries">Beneficiaries</a> / ${b.nick}</div>
-  <div class="row between mb24" style="flex-wrap:wrap"><div><h1>${b.nick}</h1><p class="sub-title" style="margin:0">${b.name}</p></div><div class="row">${btag(b)}${b.status==='active'?`<button class="btn btn-primary" onclick="startPay('${b.cc}','${b.id}')">Pay ${b.nick}</button>`:''}</div></div>
+  <div class="row between mb24" style="flex-wrap:wrap"><div><h1>${b.nick}</h1><p class="sub-title" style="margin:0">${b.name}</p></div><div class="row">${btag(b)}${payable(b)?`<button class="btn btn-primary" onclick="startPay('${b.cc}','${b.id}')">Pay ${b.nick}</button>`:''}</div></div>
   <div class="grid g-main"><div class="grid" style="align-content:start">
     ${b.status==='info'?`<div class="card" style="border-color:var(--red600)"><h3>We need more information</h3><p class="muted" style="margin-top:0">${b.infoReq} Reply by <b>${b.infoDue}</b>, or the beneficiary won't be added.</p>
       <div class="upload ${b.infoFile?'done':''}" onclick="ben('${b.id}').infoFile=true;keepScroll=true;render()">${b.infoFile?ic.ok+' <span>bank-letter.pdf · 210 KB</span>':ic.up+'<div>Upload document</div><div class="small">PDF, JPG or PNG, up to 5 MB</div>'}</div>
       <button class="btn btn-primary mt16" ${b.infoFile?'':'disabled'} onclick="benInfoSend('${b.id}')">Send</button></div>`:''}
     ${b.cpv&&b.cpv.status==='nomatch'&&b.status==='active'?`<div class="alert a-err"><span class="ic">${ic.warn}</span><div><b>The bank has this account under a different name:</b> ${b.cpv.name}. Check the details with your supplier before you pay. Your Admin will see this when approving.</div></div>`:''}
-    ${inHold(b)?`<div class="alert a-info"><span class="ic">${ic.info}</span><div><b>${holdTxt(b)}.</b> New beneficiaries can be paid 4 hours after they're added. You can prepare the payment now and submit it then.</div></div>`:''}
+    ${inHold(b)?`<div class="alert a-info"><span class="ic">${ic.info}</span><div><b>${holdTxt(b)}.</b> New beneficiaries can be paid 4 hours after they're added.</div></div>`:''}
     ${b.screenFail?`<div class="alert a-info"><span class="ic">${ic.info}</span><div><b>We couldn't add this beneficiary.</b> Contact support if you have questions.</div></div>`:''}
     <div class="card"><h3>Progress</h3><div class="tl mt16">${steps.map(([t,s,cls])=>`<div class="tl-i ${cls}"><span class="tl-dot">${cls==='done'?ic.check:cls==='fail'?ic.x:''}</span><div><div class="tl-t">${t}</div><div class="tl-s">${s}</div></div></div>`).join('')}</div></div>
   </div>
@@ -1161,6 +1164,7 @@ function benInfoSend(id){ const b=ben(id); b.needInfo=false; toast('Sent. We\'ll
 
 /* ================= PAYMENT FLOW (2 steps) ================= */
 function startPay(cc,benId,invId,recvPreset){
+  if(benId&&inHold(ben(benId))){ toast(holdTxt(ben(benId))); location.hash='#ben/'+benId; return; }
   if(S.disabled){ location.hash='#intl'; return; }
   S.introSeen=true; tick();
   const inv = invId? S.invoices.find(i=>i.id===invId):null; const b0 = benId? ben(benId):null;
@@ -1198,7 +1202,7 @@ const invOk = () => { const d=S.draft; return d.invId ? !!String(d.invNo||'').tr
 const invChkHtml = () => { const d=S.draft;
   return `<div class="field mt16" style="margin-bottom:0"><label class="f">Invoice number</label><input id="invChk" class="input" autocomplete="off" value="${d.invNo||''}" oninput="invChkIn(this.value)" placeholder="As shown on the invoice"><div class="help">We use it as the reference on your supplier's bank statement.</div></div>`; };
 function invChkIn(v){ S.draft.invNo=v; payCheck(); }
-const payReady = () => { const d=S.draft; const b=d.ben&&ben(d.ben); return b && b.status==='active' && invOk() && parseFloat(d.recv)>0 && dTot()<=S.balance && (d.sof!=='Other'||d.sofOther); };
+const payReady = () => { const d=S.draft; const b=d.ben&&ben(d.ben); return payable(b) && invOk() && parseFloat(d.recv)>0 && dTot()<=S.balance && (d.sof!=='Other'||d.sofOther); };
 const rateLine = cc => { const c=CORRIDORS[cc]; return `1 AED = <span class="num">${S.rates[cc].toFixed(4)}</span> ${c.cur} · fee ${money(feeFor(c.cur))} + VAT`; };
 const invRow = (i,d) => `<div class="inv-row ${d.invId===i.id?'sel':''}" onclick="pickInv('${i.id}')"><span class="rb"></span><div class="li-main"><div class="t num">${i.no}</div><div class="s">Due ${i.due}${i.status==='overdue'?' · <span style="color:var(--red600);font-weight:600">Overdue</span>':''} · ${i.src}</div></div><button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();viewDoc('${i.no.replace(/'/g,'')}.pdf')">View</button></div>`;
 function invSection(b,invs){
@@ -1260,7 +1264,7 @@ function vPay(step){
     <div class="row between mb16"><h2 style="margin:0"><span class="stepn">3</span> ${d.lockBen?'Paying':'Beneficiary'}</h2>${d.lockBen?'':`<a href="#beneficiaries" class="small">View all</a>`}</div>
     <div class="grid g3">
       ${d.lockBen?'':`<button class="choice" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--blue-600)" onclick="startBen('${d.cc}',true)"><span style="font-size:22px">+</span><span class="t">New beneficiary</span><span class="s">in ${c.name}</span></button>`}
-      ${list.map(x=>{const off=x.status!=='active';return `<button class="choice ${d.ben===x.id?'sel':''} ${off?'disabled':''}" ${off||d.lockBen?'':`onclick="pickBen('${x.id}')"`}><div class="row between"><span class="tag t-gray" style="padding:2px 8px">${c.flag} ${c.cur}</span>${off?btag(x):''}</div><div class="t mt8" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.nick}</div><div class="s">${x.bank} ${x.acct}</div><div class="s">${etaOf(x)}</div>${holdNote(x)}</button>`}).join('')}
+      ${list.map(x=>{const off=!payable(x);return `<button class="choice ${d.ben===x.id?'sel':''} ${off?'disabled':''}" ${off||d.lockBen?'':`onclick="pickBen('${x.id}')"`}><div class="row between"><span class="tag t-gray" style="padding:2px 8px">${c.flag} ${c.cur}</span>${off?btag(x):''}</div><div class="t mt8" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${x.nick}</div><div class="s">${x.bank} ${x.acct}</div><div class="s">${etaOf(x)}</div>${holdNote(x)}</button>`}).join('')}
     </div>
     ${!list.length?`<p class="small muted mt8">No saved beneficiaries in ${c.name} yet.</p>`:''}
   </div>
@@ -1296,7 +1300,7 @@ function pickBen(id){ Object.assign(S.draft,{ben:id,invNew:false,showAllInv:fals
 function payCheck(){ const n=$('#nPay'); if(n) n.disabled=!payReady(); const r=$('#npRail'); if(r) r.innerHTML=npRail(); }
 function npRail(){
   const d=S.draft; if(!d) return ''; const c=CORRIDORS[d.cc]; const b=d.ben?ben(d.ben):null; const amt=(parseFloat(d.recv)||0)>0;
-  const st=[['Amount',amt],['Pay with',amt],['Beneficiary',!!(b&&b.status==='active')],['Invoice',!!(b&&b.status==='active'&&invOk())],['Purpose and documents',payReady()]];
+  const st=[['Amount',amt],['Pay with',amt],['Beneficiary',payable(b)],['Invoice',payable(b)&&invOk()],['Purpose and documents',payReady()]];
   let cur=st.findIndex(x=>!x[1]); if(cur<0) cur=st.length;
   return `<div class="card"><h3 style="margin-bottom:4px">Your payment</h3><div class="np-steps">${st.map(([t,ok],i)=>`<div class="np-step ${ok?'done':i===cur?'cur':''}"><span class="ix">${ok?LI.check:i+1}</span>${t}</div>`).join('')}</div>
     <div class="np-sum"><div class="kv"><span class="k">${b?b.nick:'Supplier'} receives</span><span class="v num">${money(parseFloat(d.recv)||0,c.cur)}</span></div><div class="kv"><span class="k">Rate</span><span class="v num">1 AED = ${S.rates[d.cc].toFixed(4)}</span></div><div class="kv total"><span class="k">Total</span><span class="v">${money(dTot())}</span></div><div class="small muted">Indicative. Fixed when your Admin approves.</div></div>
@@ -1641,7 +1645,7 @@ function cardTopUp(need){
 }
 function addInvoice(){
   openModal(`<div class="modal-h"><h3>Add supplier invoice</h3><button class="icon-btn" onclick="closeModal()">${ic.x}</button></div><div class="modal-b">
-  <div class="field"><label class="f">Supplier</label><div class="row" style="gap:8px"><select class="input">${S.beneficiaries.filter(b=>b.status==='active').map(b=>`<option>${b.nick} · ${CORRIDORS[b.cc].name}</option>`).join('')}</select><button class="btn btn-secondary" style="height:44px" onclick="startBen()">+ New supplier</button></div></div>
+  <div class="field"><label class="f">Supplier</label><div class="row" style="gap:8px"><select class="input">${S.beneficiaries.filter(b=>payable(b)).map(b=>`<option>${b.nick} · ${CORRIDORS[b.cc].name}</option>`).join('')}</select><button class="btn btn-secondary" style="height:44px" onclick="startBen()">+ New supplier</button></div></div>
   <div class="upload">${ic.up}<div>Upload the invoice</div></div>
   <div class="grid g2 mt16"><div class="field"><label class="f">Invoice number</label><input class="input" autocomplete="off"></div><div class="field"><label class="f">Due date</label><input class="input" type="date"></div></div>
 </div>
@@ -1650,7 +1654,7 @@ function addInvoice(){
 function inviteSupplier(){
   openModal(`<div class="modal-h"><h3>Request an invoice from your supplier</h3><button class="icon-btn" onclick="closeModal()">${ic.x}</button></div><div class="modal-b">
   <p class="muted" style="margin-top:0">We'll email your supplier a secure link. They verify with a one-time code and upload the invoice. It appears in your supplier invoices.</p>
-  <div class="field"><label class="f">Supplier</label><div class="row" style="gap:8px"><select class="input">${S.beneficiaries.filter(b=>b.status==='active').map(b=>`<option>${b.nick}</option>`).join('')}</select><button class="btn btn-secondary" style="height:44px" onclick="startBen()">+ New supplier</button></div></div>
+  <div class="field"><label class="f">Supplier</label><div class="row" style="gap:8px"><select class="input">${S.beneficiaries.filter(b=>payable(b)).map(b=>`<option>${b.nick}</option>`).join('')}</select><button class="btn btn-secondary" style="height:44px" onclick="startBen()">+ New supplier</button></div></div>
   <div class="field"><label class="f">Supplier email</label><input class="input" autocomplete="off" value="accounts@hengtai.example"></div>
   <div class="field"><label class="f">Message <span class="muted">(optional)</span></label><textarea class="input">Please upload your invoice for our October order.</textarea></div></div>
   <div class="modal-f"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="closeModal();toast('Link sent to your supplier (prototype)')">Send link</button></div>`);
@@ -1680,7 +1684,7 @@ const SCEN=[
   ['Returned by the bank and refunded','The supplier\'s bank sent it back after completion.',()=>{location.hash='#txn/IP-10233';},'Open'],
   ['Rate changes at Authorize','When Omar clicks Authorize, the final rate is fetched once more. A confirmation shows the final AED total and what Hengtai receives, here with a changed rate, before password and authenticator OTP.',()=>{S.persona='admin';S.forceRateMove=true;location.hash='#approvals';setTimeout(()=>openDrawer('IP-10241'),50);},'Try it'],
   ['Corridor temporarily unavailable','Payments to Türkiye are paused and can\'t be selected.',()=>{S.pausedCorridor='TR';S.introSeen=true;location.hash='#intl';},'Try it'],
-  ['New beneficiary: 4 hour hold','Pacific Components was added 2 hours ago. Sara can prepare a payment, but Submit stays unavailable until 4 hours after it was added, with the time shown.',()=>{S.persona='maker';S.introSeen=true;startPay('US','B6');S.draft.recv='2000';S.draft.last='recv';calcDraft();S.draft.invNew=true;S.draft.invNo='PC-2026-118';S.draft.invFile=true;location.hash='#pay/2';},'Try it'],
+  ['New beneficiary: 4 hour hold','Pacific Components was added 2 hours ago. It shows as Pending with the time it can be paid, and it can\'t be picked for a payment until the 4 hours have passed.',()=>{S.persona='maker';S.introSeen=true;location.hash='#beneficiaries';},'Try it'],
   ['Skip the hold for this demo','Adds a beneficiary and lets you pay it straight away, so the rest of the journey can be shown. In the product, the 4 hour hold always applies.',()=>{S.persona='maker';S.skipHold=true;location.hash='#beneficiaries';setTimeout(()=>startBen(),50);},'Try it'],
   ['Beneficiary needs more information','After review, the maker has 72 hours to upload a document before the beneficiary can be paid.',()=>{S.persona='maker';S.forceBenInfo=true;location.hash='#beneficiaries';setTimeout(()=>startBen(),50);},'Try it'],
   ['Beneficiary can\'t be added','Screening doesn\'t clear. The business only sees that it couldn\'t be added, with no reason.',()=>{S.persona='maker';S.forceBenFail=true;location.hash='#beneficiaries';setTimeout(()=>startBen(),50);},'Try it'],

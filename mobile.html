@@ -229,6 +229,7 @@ const INFO={
   'Rejected':'Your Admin rejected the payment, with a remark. No money was taken.',
   'Expired':'Nobody approved the payment within 24 hours of it reaching the Admin. No money was taken.',
   'Withdrawn':'The Maker withdrew the payment before it was approved. No money was taken.',
+  'Pending':'New beneficiaries can be paid 4 hours after they\'re added. The beneficiary becomes Active when the 4 hours have passed.',
   'Same day':'Same day delivery is an estimate. It can take longer depending on the receiving bank or wallet, weekends and public holidays in either country.'
 };
 const pad=n=>String(n).padStart(2,'0');
@@ -236,7 +237,8 @@ const HOLD_MS=4*3600e3;
 const holdEnd=b=>b&&b.addedTs?b.addedTs+HOLD_MS:0;
 const inHold=b=>!!b&&!S.skipHold&&b.status==='active'&&Date.now()<holdEnd(b);
 const t12=ts=>{const d=new Date(ts);let h=d.getHours();const ap=h>=12?'PM':'AM';h=h%12||12;return `${h}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`+(d.getDate()!==new Date().getDate()?' tomorrow':'');};
-const holdTxt=b=>`You can pay this beneficiary from ${t12(holdEnd(b))}`;
+const holdTxt=b=>`This beneficiary is pending. You can pay it from ${t12(holdEnd(b))}`;
+const payable=b=>!!b&&b.status==='active'&&!inHold(b);
 const now=()=>{const d=new Date();return `${d.getDate()} ${d.toLocaleString('en',{month:'short'})}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
 const plusH=h=>{const d=new Date(Date.now()+h*3600e3);return `${d.getDate()} ${d.toLocaleString('en',{month:'short'})}, ${pad(d.getHours())}:${pad(d.getMinutes())}`;};
 const money=(v,c='AED')=>`${c} ${Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
@@ -322,11 +324,11 @@ function vIntl(){
 }
 function vPayments(){ const f=S.pf||'all'; const L=S.pays.filter(p=>f==='all'||(f==='prog'?['checking','pending_info','review','awaiting','approved','processing'].includes(p.status):['completed','failed','cancelled','rejected','expired','withdrawn'].includes(p.status)));
   return shell({title:'Payments',back:"history.back()",body:`<div class="seg"><button class="${f==='all'?'on':''}" onclick="S.pf='all';render()">All</button><button class="${f==='prog'?'on':''}" onclick="S.pf='prog';render()">In progress</button><button class="${f==='done'?'on':''}" onclick="S.pf='done';render()">Finished</button></div><div class="card" style="padding:4px 16px">${L.length?L.map(payRow).join(''):'<div class="empty">Nothing here</div>'}</div>`}); }
-function vBens(){ return shell({title:'Beneficiaries',back:"history.back()",body:`<div class="card" style="padding:4px 16px">${S.bens.map(b=>`<div class="li"><div class="ic"><span class="flag">${COR[b.cc].f}</span></div><div class="grow"><div class="t">${b.nick}</div><div class="s">${b.bank} ${b.acct} · Same day</div></div>${b.status==='active'?'<span class="tag t-green">Active</span>':'<span class="tag t-yellow">Being checked</span>'}</div>${inHold(b)?`<div class="xs muted" style="margin:-6px 0 10px 52px">Pay from ${t12(holdEnd(b))}</div>`:''}`).join('')}</div><p class="help mt12">You can pay a new beneficiary 4 hours after it's added.</p>`,cta:`<button class="btn btn-p" onclick="addBen()">${I(ic.plus,18)} Add beneficiary</button>`}); }
+function vBens(){ return shell({title:'Beneficiaries',back:"history.back()",body:`${S.bens.filter(inHold).map(b=>`<div class="alert a-info">${I(ic.info,18)}<div><b>${b.nick} is pending.</b> You can pay it from ${t12(holdEnd(b))}. New beneficiaries can be paid 4 hours after they're added.</div></div>`).join('')}<div class="card" style="padding:4px 16px">${S.bens.map(b=>`<div class="li"><div class="ic"><span class="flag">${COR[b.cc].f}</span></div><div class="grow"><div class="t">${b.nick}</div><div class="s">${b.bank} ${b.acct} · Same day</div></div>${inHold(b)?`<span class="tag t-yellow">Pending</span>${infoBtn('Pending')}`:b.status==='active'?'<span class="tag t-green">Active</span>':'<span class="tag t-yellow">Being checked</span>'}</div>${inHold(b)?`<div class="xs muted" style="margin:-6px 0 10px 52px">Pay from ${t12(holdEnd(b))}</div>`:''}`).join('')}</div><p class="help mt12">New beneficiaries show as Pending and can be paid 4 hours after they're added.</p>`,cta:`<button class="btn btn-p" onclick="addBen()">${I(ic.plus,18)} Add beneficiary</button>`}); }
 
 /* ---------- new payment: one step per screen ---------- */
 function lastTo(id){ return S.pays.find(p=>p.ben===id); }
-function startPay(benId,invId){ const b=benId?ben(benId):null; S.d={step:1,cc:b?b.cc:'CN',ben:benId||null,recv:'',send:'',last:'recv',invId:invId||null,invNo:invId?S.invs.find(i=>i.id===invId).no:'',invNew:false,invFile:!!invId,purpose:'goods',sof:'Company funds',docs:[],remembered:false}; if(benId) remember(benId); go('#pay'); }
+function startPay(benId,invId){ if(benId&&inHold(ben(benId))){ toast(holdTxt(ben(benId))); go('#bens'); return; } const b=benId?ben(benId):null; S.d={step:1,cc:b?b.cc:'CN',ben:benId||null,recv:'',send:'',last:'recv',invId:invId||null,invNo:invId?S.invs.find(i=>i.id===invId).no:'',invNew:false,invFile:!!invId,purpose:'goods',sof:'Company funds',docs:[],remembered:false}; if(benId) remember(benId); go('#pay'); }
 function sendAgain(pid){ const p=pay(pid); startPay(p.ben); S.d.recv=String(p.recv); calc('recv'); S.d.invNew=true; toast(`Sending again to ${ben(p.ben).nick}. Add the new invoice.`); render(); }
 function remember(id){ const p=lastTo(id); if(p){ Object.assign(S.d,{purpose:p.purpose,sof:p.sof,remembered:true}); } }
 function calc(which){ const d=S.d; const r=S.rates[d.cc]; if(which==='send'){ const v=parseFloat(d.send); d.recv=isNaN(v)?'':(v*r).toFixed(2);} else { const v=parseFloat(d.recv); d.send=isNaN(v)?'':(v/r).toFixed(2);} }
@@ -352,9 +354,9 @@ function vPay(){
     cta:`<button class="btn btn-p" id="next" ${parseFloat(d.recv)>0?'':'disabled'} onclick="stepNext()">Continue</button>`});
   if(d.step===2){ const list=S.bens.filter(x=>x.cc===d.cc); return shell({title:'New payment',back:'stepBack()',right:close,tabs:false,body:`${stepHead()}
     <h1 style="font-size:21px">Who are you paying?</h1><p class="sub">Suppliers in ${c.n}.</p>
-    ${list.map(x=>`<button class="opt ${d.ben===x.id?'sel':''}" onclick="pickBen('${x.id}')" ${x.status!=='active'?'disabled style="opacity:.55"':''}><span class="rb"></span><div class="grow"><div style="font-weight:600">${x.nick}</div><div class="xs muted">${x.bank} ${x.acct} · Same day ${x.status!=='active'?'· Being checked':''}${inHold(x)?' · Pay from '+t12(holdEnd(x)):''}</div></div><span class="flag">${c.f}</span></button>`).join('')}
+    ${list.map(x=>`<button class="opt ${d.ben===x.id?'sel':''}" onclick="pickBen('${x.id}')" ${!payable(x)?'disabled style="opacity:.55"':''}><span class="rb"></span><div class="grow"><div style="font-weight:600">${x.nick}</div><div class="xs muted">${x.bank} ${x.acct} · Same day ${x.status!=='active'?'· Being checked':''}${inHold(x)?' · Pending, pay from '+t12(holdEnd(x)):''}</div></div><span class="flag">${c.f}</span></button>`).join('')}
     <button class="opt dashed mt8" onclick="addBen('${d.cc}')">${I(ic.plus,18)} New beneficiary</button>`,
-    cta:`<button class="btn btn-p" ${b&&b.status==='active'?'':'disabled'} onclick="stepNext()">Continue</button>`}); }
+    cta:`<button class="btn btn-p" ${payable(b)?'':'disabled'} onclick="stepNext()">Continue</button>`}); }
   if(d.step===3){ const invs=S.invs.filter(i=>i.ben===d.ben&&i.status!=='paid'); return shell({title:'New payment',back:'stepBack()',right:close,tabs:false,body:`${stepHead()}
     <h1 style="font-size:21px">Which invoice?</h1><p class="sub">Every payment carries an invoice. Its number is the reference your supplier sees.</p>
     ${invs.map(i=>`<button class="opt ${d.invId===i.id?'sel':''}" onclick="S.d.invId='${i.id}';S.d.invNo='${i.no}';S.d.invNew=false;S.d.invFile=true;render()"><span class="rb"></span><div class="grow"><div style="font-weight:600" class="num">${i.no}</div><div class="xs muted">${i.status==='overdue'?'Overdue':'Due '+i.due}</div></div>${I(ic.file,18)}</button>`).join('')}
@@ -391,7 +393,7 @@ function addBen(cc){ cc=cc||'CN'; openSheet(`<h2>New beneficiary in ${COR[cc].n}
   <div class="help">Delivery: Same day. We check every new beneficiary before you can pay them. This usually takes a few minutes. You can pay a new beneficiary 4 hours after you add it.</div>
   <button class="btn btn-p mt16" onclick="saveBen('${cc}')">Save beneficiary</button>`); }
 function saveBen(cc){ const n=($('#bn').value||'New Supplier Co.').trim(); const id='B'+(S.bens.length+1); const nb={id,nick:n.split(' ').slice(0,2).join(' '),name:n,cc,bank:$('#bb').value||'Bank',acct:'•••• '+(($('#ba').value||'0000').slice(-4)),status:'screening',cpv:'na',addedTs:Date.now()}; S.bens.push(nb); closeSheet(); toast('Saved. Being checked.'); render();
-  setTimeout(()=>{ nb.status='active'; toast(inHold(nb)?`${nb.nick} added. Pay from ${t12(holdEnd(nb))}`:`${nb.nick} is ready to pay`); if(S.d&&S.d.step===2&&S.d.cc===cc) pickBen(id); else render(); },2500); }
+  setTimeout(()=>{ nb.status='active'; toast(inHold(nb)?`${nb.nick} added and pending. Pay from ${t12(holdEnd(nb))}`:`${nb.nick} is ready to pay`); if(S.d&&S.d.step===2&&S.d.cc===cc&&payable(nb)) pickBen(id); else render(); },2500); }
 function submitPay(){ const d=S.d; const p={id:'IP-'+(S.seq++),ben:d.ben,recv:+(+d.recv).toFixed(2),rate:S.rates[d.cc],status:'checking',by:S.persona,at:now(),purpose:d.purpose,sof:d.sof,inv:d.invNo}; S.pays.unshift(p); S.d=null; go('#done/'+p.id); screen(p); }
 function screen(p){ setTimeout(()=>{ if(p.status!=='checking') return; if(S.forceDocs){ S.forceDocs=false; p.status='pending_info'; p.infoDue=plusH(5); notify(p.by,'Documents required',`We need a few more details for ${p.id}.`,'#txn/'+p.id); } else clearPay(p); render(); },3000); }
 function clearPay(p){ p.status='awaiting'; p.orderAt=now(); p.expires=plusH(24); notify('admin','Payment waiting for your approval',`${USERS[p.by].n} submitted a payment to ${ben(p.ben).nick}.`,'#approval/'+p.id); }
